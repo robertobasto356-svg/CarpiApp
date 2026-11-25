@@ -46,3 +46,7 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Volcados de la JVM al fallar Gradle
+hs_err_pid*.log
+replay_pid*.log

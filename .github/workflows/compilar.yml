@@ -1,0 +1,72 @@
+# Compila CarpiApp para Android (APK) e iPhone (IPA sin firmar) en GitHub Actions.
+# Es gratis porque el repositorio es público. Los archivos quedan en la pestaña
+# "Actions" → ejecución → "Artifacts".
+#
+# Instalar en iPhone sin pagar la cuenta de Apple: descarga el IPA y usa
+# Sideloadly (Windows/Mac) con tu Apple ID gratuito. La app dura 7 días y
+# luego se vuelve a instalar igual. Ver docs/INSTALACION.md.
+name: Compilar CarpiApp
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+concurrency:
+  group: compilar-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  android:
+    needs: pruebas
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CarpiApp-android
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  ios:
+    needs: pruebas
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+      - name: Empaquetar IPA sin firmar
+        run: |
+          mkdir -p Payload
+          cp -R build/ios/iphoneos/Runner.app Payload/
+          zip -qr CarpiApp-sin-firmar.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CarpiApp-ios
+          path: CarpiApp-sin-firmar.ipa

@@ -7,7 +7,35 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Carpiapp</string>
+	<string>CarpiApp</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>mx.carpiapp.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>io.carpiapp</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>tel</string>
+		<string>mailto</string>
+		<string>whatsapp</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>CarpiApp usa la cámara para tomar fotos de referencia del espacio y del mueble.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>CarpiApp necesita acceso a tus fotos para adjuntar imágenes de referencia a tus pedidos.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>CarpiApp usa los sensores de movimiento para el nivel digital.</string>
+	<key>io.flutter.embedded_views_preview</key>
+	<true/>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
