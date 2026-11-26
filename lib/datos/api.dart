@@ -44,6 +44,24 @@ class Api {
   static Future<void> actualizarPedido(int id, Map<String, dynamic> cambios) =>
       supa.from('pedidos').update(cambios).eq('id', id);
 
+  /// Estado, avance, fecha de entrega y nota en un solo registro del historial.
+  static Future<void> registrarAvance(
+    int id, {
+    required String estado,
+    required int progreso,
+    DateTime? entrega,
+    String nota = '',
+  }) => supa.rpc(
+    'registrar_avance',
+    params: {
+      'p_pedido': id,
+      'p_estado': estado,
+      'p_progreso': progreso,
+      'p_entrega': entrega?.toIso8601String().substring(0, 10),
+      'p_nota': nota.trim(),
+    },
+  );
+
   static Future<int> crearPedido({
     required int clienteId,
     required String titulo,
@@ -79,16 +97,19 @@ class Api {
     String direccion = '',
     int? catalogoId,
   }) async {
-    final r = await supa.rpc('crear_solicitud', params: {
-      'p_carpinteria': carpinteriaId,
-      'p_tipo_mueble': tipoMueble,
-      'p_titulo': titulo,
-      'p_material_acabado': materialAcabado,
-      'p_descripcion': descripcion,
-      'p_fecha_cita': fechaCita?.toUtc().toIso8601String(),
-      'p_direccion': direccion,
-      'p_catalogo': catalogoId,
-    });
+    final r = await supa.rpc(
+      'crear_solicitud',
+      params: {
+        'p_carpinteria': carpinteriaId,
+        'p_tipo_mueble': tipoMueble,
+        'p_titulo': titulo,
+        'p_material_acabado': materialAcabado,
+        'p_descripcion': descripcion,
+        'p_fecha_cita': fechaCita?.toUtc().toIso8601String(),
+        'p_direccion': direccion,
+        'p_catalogo': catalogoId,
+      },
+    );
     return (r as num).toInt();
   }
 
@@ -109,11 +130,7 @@ class Api {
   }
 
   static Future<List<Cita>> citasPedido(int pedidoId) async {
-    final r = await supa
-        .from('citas')
-        .select(_selCita)
-        .eq('pedido_id', pedidoId)
-        .order('fecha_hora', ascending: true);
+    final r = await supa.from('citas').select(_selCita).eq('pedido_id', pedidoId).order('fecha_hora', ascending: true);
     return r.map(Cita.desde).toList();
   }
 
@@ -124,17 +141,16 @@ class Api {
     required String motivo,
     String direccion = '',
     String notas = '',
-  }) =>
-      supa.from('citas').insert({
-        'carpinteria_id': _miCarpinteria,
-        'cliente_id': clienteId,
-        'pedido_id': pedidoId,
-        'fecha_hora': fechaHora.toUtc().toIso8601String(),
-        'motivo': motivo,
-        'direccion': direccion,
-        'notas': notas,
-        'estado': 'confirmada',
-      });
+  }) => supa.from('citas').insert({
+    'carpinteria_id': _miCarpinteria,
+    'cliente_id': clienteId,
+    'pedido_id': pedidoId,
+    'fecha_hora': fechaHora.toUtc().toIso8601String(),
+    'motivo': motivo,
+    'direccion': direccion,
+    'notas': notas,
+    'estado': 'confirmada',
+  });
 
   static Future<void> actualizarCita(int id, Map<String, dynamic> cambios) =>
       supa.from('citas').update(cambios).eq('id', id);
@@ -201,47 +217,36 @@ class Api {
   }
 
   static Future<void> marcarCotizacionEnviada(Cotizacion c, String pdfPath) async {
-    await supa.from('cotizaciones').update({
-      'estado': 'enviada',
-      'pdf_path': pdfPath,
-      'enviada_at': DateTime.now().toUtc().toIso8601String(),
-      'comentario_cliente': '',
-    }).eq('id', c.id);
+    await supa
+        .from('cotizaciones')
+        .update({
+          'estado': 'enviada',
+          'pdf_path': pdfPath,
+          'enviada_at': DateTime.now().toUtc().toIso8601String(),
+          'comentario_cliente': '',
+        })
+        .eq('id', c.id);
     await actualizarPedido(c.pedidoId, {'estado': 'cotizado'});
   }
 
-  static Future<void> responderCotizacion(int id, String respuesta, String comentario) =>
-      supa.rpc('responder_cotizacion', params: {
-        'p_cotizacion': id,
-        'p_respuesta': respuesta,
-        'p_comentario': comentario,
-      });
+  static Future<void> responderCotizacion(int id, String respuesta, String comentario) => supa.rpc(
+    'responder_cotizacion',
+    params: {'p_cotizacion': id, 'p_respuesta': respuesta, 'p_comentario': comentario},
+  );
 
   // ================================================================
   // Avances y fotos
   // ================================================================
   static Future<List<Avance>> avances(int pedidoId) async {
-    final r = await supa
-        .from('avances')
-        .select()
-        .eq('pedido_id', pedidoId)
-        .order('created_at', ascending: false);
+    final r = await supa.from('avances').select().eq('pedido_id', pedidoId).order('created_at', ascending: false);
     return r.map(Avance.desde).toList();
   }
 
-  static Future<void> agregarNota(Pedido p, String nota) => supa.from('avances').insert({
-        'pedido_id': p.id,
-        'estado': p.estado,
-        'progreso': p.progreso,
-        'nota': nota,
-      });
+  static Future<void> agregarNota(Pedido p, String nota) =>
+      supa.from('avances').insert({'pedido_id': p.id, 'estado': p.estado, 'progreso': p.progreso, 'nota': nota});
 
   static Future<List<Foto>> fotos(int pedidoId) async {
-    final r = await supa
-        .from('fotos')
-        .select()
-        .eq('pedido_id', pedidoId)
-        .order('created_at', ascending: false);
+    final r = await supa.from('fotos').select().eq('pedido_id', pedidoId).order('created_at', ascending: false);
     return r.map(Foto.desde).toList();
   }
 
@@ -253,11 +258,9 @@ class Api {
     String descripcionIa = '',
   }) async {
     final ruta = '${pedido.carpinteriaId}/${pedido.id}/${DateTime.now().millisecondsSinceEpoch}.jpg';
-    await supa.storage.from('fotos').uploadBinary(
-          ruta,
-          bytes,
-          fileOptions: const FileOptions(contentType: 'image/jpeg'),
-        );
+    await supa.storage
+        .from('fotos')
+        .uploadBinary(ruta, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
     await supa.from('fotos').insert({
       'pedido_id': pedido.id,
       'path': ruta,
@@ -290,11 +293,9 @@ class Api {
 
   static Future<String> subirPdfCotizacion(Cotizacion c, Uint8List pdf) async {
     final ruta = '${c.carpinteriaId}/${c.pedidoId}/${c.folio}.pdf';
-    await supa.storage.from('cotizaciones').uploadBinary(
-          ruta,
-          pdf,
-          fileOptions: const FileOptions(contentType: 'application/pdf', upsert: true),
-        );
+    await supa.storage
+        .from('cotizaciones')
+        .uploadBinary(ruta, pdf, fileOptions: const FileOptions(contentType: 'application/pdf', upsert: true));
     _urls.remove('cotizaciones/$ruta');
     return ruta;
   }
@@ -351,8 +352,9 @@ class Api {
 
   static Future<String> subirImagenCatalogo(Uint8List bytes) async {
     final ruta = '$_miCarpinteria/${DateTime.now().millisecondsSinceEpoch}.jpg';
-    await supa.storage.from('catalogo').uploadBinary(ruta, bytes,
-        fileOptions: const FileOptions(contentType: 'image/jpeg'));
+    await supa.storage
+        .from('catalogo')
+        .uploadBinary(ruta, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
     return ruta;
   }
 
@@ -443,8 +445,9 @@ class Api {
     String? ruta;
     if (foto != null) {
       ruta = '$carpinteriaId/$clientePerfilId/${DateTime.now().millisecondsSinceEpoch}.jpg';
-      await supa.storage.from('mensajes').uploadBinary(ruta, foto,
-          fileOptions: const FileOptions(contentType: 'image/jpeg'));
+      await supa.storage
+          .from('mensajes')
+          .uploadBinary(ruta, foto, fileOptions: const FileOptions(contentType: 'image/jpeg'));
     }
     await supa.from('mensajes').insert({
       'carpinteria_id': carpinteriaId,
@@ -495,7 +498,11 @@ class Api {
 
     final nombres = <String, String>{};
     if (esCarp) {
-      final cs = await supa.from('clientes').select('perfil_id, nombre').eq('carpinteria_id', _miCarpinteria).not('perfil_id', 'is', null);
+      final cs = await supa
+          .from('clientes')
+          .select('perfil_id, nombre')
+          .eq('carpinteria_id', _miCarpinteria)
+          .not('perfil_id', 'is', null);
       for (final c in cs) {
         nombres[c['perfil_id'] as String] = c['nombre'] as String;
       }
@@ -524,14 +531,16 @@ class Api {
       );
     }
     return porClave.entries
-        .map((e) => Conversacion(
-              carpinteriaId: e.value.carpinteriaId,
-              clientePerfilId: e.value.clientePerfilId,
-              titulo: e.value.titulo,
-              ultimo: e.value.ultimo,
-              fecha: e.value.fecha,
-              sinLeer: sinLeer[e.key] ?? 0,
-            ))
+        .map(
+          (e) => Conversacion(
+            carpinteriaId: e.value.carpinteriaId,
+            clientePerfilId: e.value.clientePerfilId,
+            titulo: e.value.titulo,
+            ultimo: e.value.ultimo,
+            fecha: e.value.fecha,
+            sinLeer: sinLeer[e.key] ?? 0,
+          ),
+        )
         .toList();
   }
 
@@ -563,11 +572,7 @@ class Api {
           event: PostgresChangeEvent.insert,
           schema: 'public',
           table: 'notificaciones',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'usuario_id',
-            value: miId!,
-          ),
+          filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'usuario_id', value: miId!),
           callback: (p) => alLlegar(Notificacion.desde(p.newRecord)),
         )
         .subscribe();
@@ -576,29 +581,23 @@ class Api {
   // ================================================================
   // Calificaciones
   // ================================================================
-  static Future<void> calificar(int pedidoId, int estrellas, String opinion) => supa.rpc(
-        'calificar_pedido',
-        params: {'p_pedido': pedidoId, 'p_estrellas': estrellas, 'p_opinion': opinion},
-      );
+  static Future<void> calificar(int pedidoId, int estrellas, String opinion) =>
+      supa.rpc('calificar_pedido', params: {'p_pedido': pedidoId, 'p_estrellas': estrellas, 'p_opinion': opinion});
 
   static Future<Map<String, dynamic>?> calificacionDe(int pedidoId) =>
       supa.from('calificaciones').select().eq('pedido_id', pedidoId).maybeSingle();
 
-  static Future<List<Map<String, dynamic>>> calificacionesDe(String carpinteriaId) => supa
-      .from('calificaciones')
-      .select()
-      .eq('carpinteria_id', carpinteriaId)
-      .order('created_at', ascending: false);
+  static Future<List<Map<String, dynamic>>> calificacionesDe(String carpinteriaId) =>
+      supa.from('calificaciones').select().eq('carpinteria_id', carpinteriaId).order('created_at', ascending: false);
 
   // ================================================================
   // Base de conocimiento (CarpiIA)
   // ================================================================
   static Future<List<FichaConocimiento>> buscarConocimiento(String consulta, String publico, {int limite = 4}) async {
-    final r = await supa.rpc('buscar_conocimiento', params: {
-      'p_consulta': consulta,
-      'p_publico': publico,
-      'p_limite': limite,
-    });
+    final r = await supa.rpc(
+      'buscar_conocimiento',
+      params: {'p_consulta': consulta, 'p_publico': publico, 'p_limite': limite},
+    );
     return (r as List).map((e) => FichaConocimiento.desde(e as Map<String, dynamic>)).toList();
   }
 }

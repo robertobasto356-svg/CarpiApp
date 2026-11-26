@@ -12,7 +12,7 @@
 ## Carpintero
 
 ### Inicio
-Muestra el resumen del día (pedidos activos, solicitudes por cotizar, visitas de hoy), las solicitudes por atender y las próximas visitas. La campana muestra las notificaciones.
+Muestra el resumen del día (pedidos activos, solicitudes por cotizar, visitas de hoy), las solicitudes por atender y las próximas visitas. La campana muestra las notificaciones; al tocar una se abre el pedido o la conversación.
 
 ### Atender una solicitud
 1. **Pedidos → Nuevos** → abre la solicitud.
@@ -30,14 +30,14 @@ Muestra el resumen del día (pedidos activos, solicitudes por cotizar, visitas d
 4. Si el cliente **pide ajustes**, verás su comentario. Edita la cotización y reenvíala.
 
 ### Fabricar y entregar
-Cuando el cliente acepta, en el pedido aparece **Avance de fabricación**: elige el estado (*En fabricación*, *Listo para entregar*, *Entregado*), mueve el avance, pon la fecha estimada y una nota opcional. El cliente recibe cada actualización.
+Cuando el cliente acepta, en el pedido aparece **Avance de fabricación**: elige el estado (*En fabricación*, *Listo para entregar*, *Entregado*), mueve el avance, pon la fecha estimada y una nota opcional. El cliente recibe cada actualización con tu nota, y al entregar puede calificar el trabajo (te llega un aviso con las estrellas).
 
 ### Más herramientas
 - **Clientes:** agenda con búsqueda, alta manual, llamada, WhatsApp y chat.
 - **Proyectos:** muebles en proceso y terminados con su avance.
 - **Inventario:** materiales y herramientas, con aviso cuando se agotan.
 - **Materiales / Herramientas:** directorio de proveedores de Mérida (teléfono, sitio web, dirección, "Cómo llegar") y tus proveedores propios.
-- **Programar visitas:** calendario con todas tus citas.
+- **Programar visitas:** calendario con todas tus citas. Al agendar, confirmar, reprogramar o cancelar una visita, el cliente recibe un aviso.
 - **Reportes:** ingresos, gastos, ganancia y lo que está por cobrar, por mes, por año o en total. Solo tú los ves.
 - **Mi catálogo:** publica tus trabajos con foto y precio de referencia.
 - **CarpiIA:** pregunta por materiales, acabados, proveedores ("Proveedores de MDF") o tableros ("¿Cuántos tableros necesito para 10 m²?"). Desde un pedido, *Revisar con CarpiIA* te dice qué datos faltan.
@@ -54,7 +54,9 @@ Cuando el cliente acepta, en el pedido aparece **Avance de fabricación**: elige
 4. Propón **fecha y hora de la cita**. No necesitas medidas: **las toma el carpintero en la cita**.
 5. **Enviar solicitud.**
 
-También puedes usar el **Asistente CarpiApp** → *Preparar mi pedido*: te hace unas preguntas y arma el borrador.
+También puedes usar el **Asistente CarpiApp** → *Preparar mi pedido*: te hace unas preguntas y arma el borrador. Si ya le dijiste el espacio o el material ("un librero de pino para la sala"), no te lo vuelve a preguntar.
+
+> Si sales de un formulario (solicitud, cotización o catálogo) con datos sin guardar, la app te pregunta antes de descartarlos.
 
 ### Responder la cotización
 En **Pedidos** aparece *Responder*. Abre el pedido para ver el desglose y el **PDF** (ver, descargar o imprimir) y elige:
@@ -68,7 +70,7 @@ En el pedido ves las etapas (Solicitud · Cita · Cotización · Fabricación ·
 ### Otras secciones
 - **Catálogo:** busca por tipo de mueble, guarda favoritos ❤ y consulta cada carpintería con sus calificaciones.
 - **Mensajes:** conversaciones con tus carpinteros y el asistente.
-- **Perfil:** datos, dirección, método de pago preferido (el pago se acuerda con el carpintero; la app no cobra) y notificaciones.
+- **Perfil:** datos, dirección, método de pago preferido (el pago se acuerda con el carpintero; la app no cobra) y notificaciones (si las apagas, dejas de recibir avisos).
 
 ## Límites del asistente
 El asistente informa y organiza. **No genera diseños ni confirma materiales, medidas, precios o fechas**: eso lo acuerdas con tu carpintero. La vista en realidad aumentada es aproximada y no sustituye la visita.

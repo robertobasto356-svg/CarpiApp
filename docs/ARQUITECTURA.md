@@ -44,6 +44,7 @@ Las migraciones están en `supabase/migrations/`:
 | `…202000_datos_iniciales.sql` | Proveedores de Mérida y base de conocimiento de CarpiIA |
 | `…203000_ajustes_seguridad.sql` | Ajustes tras la revisión de seguridad |
 | `…204000_notificaciones_sin_duplicar.sql` | Un solo aviso por cada respuesta o envío de cotización |
+| `20261125090000_avance_con_nota.sql` | Avance con nota en un solo registro (`registrar_avance`), avisos de visitas y de calificación, y respeto del interruptor de notificaciones |
 
 ### Tablas
 
@@ -67,13 +68,28 @@ Las migraciones están en `supabase/migrations/`:
 
 `solicitado → cita_agendada → en_cotizacion → cotizado → (ajustes_solicitados ↺) → aceptado → en_fabricacion → por_entregar → entregado`
 (también `rechazado` y `cancelado`). Cada cambio crea un registro en `avances` y una notificación.
+El carpintero registra el avance de fabricación con `registrar_avance`: estado, porcentaje, fecha de entrega y nota quedan en
+**un solo** registro del historial, y la nota llega en el aviso al cliente.
+
+### Avisos automáticos (tabla `notificaciones`)
+
+| Evento | Quién recibe el aviso |
+|---|---|
+| Nueva solicitud | Carpintero |
+| Cambio de estado o de avance del pedido | Cliente (con la nota del carpintero, si la hay) |
+| Cotización enviada / respondida | Cliente / carpintero |
+| Visita agendada, confirmada, reprogramada o cancelada | La otra parte (nunca quien hizo el cambio) |
+| Mensaje nuevo | El otro participante del chat |
+| Calificación | Carpintero |
+
+Si alguien apaga **Notificaciones** en su perfil, no se le generan avisos. Al tocar un aviso se abre el pedido (o la bandeja de mensajes).
 
 ### Seguridad
 
 - RLS activo en todas las tablas. Funciones auxiliares en el esquema `privado`, que la API no expone.
 - **Aislamiento entre carpinterías:** un carpintero solo ve sus clientes, pedidos, inventario, gastos y reportes.
 - **Cliente:** ve solo sus pedidos, citas, fotos y las cotizaciones ya enviadas (no los borradores). No puede cambiar su rol ni crear pedidos por fuera de la función `crear_solicitud`.
-- Las acciones del cliente pasan por funciones RPC que validan identidad y transición: `crear_solicitud`, `responder_cotizacion` y `calificar_pedido`.
+- Las acciones sensibles pasan por funciones RPC que validan identidad y transición: `crear_solicitud`, `responder_cotizacion` y `calificar_pedido` (cliente) y `registrar_avance` (carpintero, solo pedidos de su carpintería).
 - Storage: las rutas `{carpintería}/{pedido}/…` se validan contra el pedido; los PDF solo los sube la carpintería.
 - Probado con usuarios simulados (dos carpinteros y un cliente). Revisado con los *advisors* de Supabase.
 

@@ -10,15 +10,15 @@ class Logo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Image.asset(
-        'assets/logo.png',
-        width: tam,
-        fit: BoxFit.contain,
-        errorBuilder: (_, _, _) => CircleAvatar(
-          radius: tam / 3,
-          backgroundColor: Colores.madera,
-          child: Icon(Icons.carpenter, color: Colors.white, size: tam / 3),
-        ),
-      );
+    'assets/logo.png',
+    width: tam,
+    fit: BoxFit.contain,
+    errorBuilder: (_, _, _) => CircleAvatar(
+      radius: tam / 3,
+      backgroundColor: Colores.madera,
+      child: Icon(Icons.carpenter, color: Colors.white, size: tam / 3),
+    ),
+  );
 }
 
 // =====================================================================
@@ -34,32 +34,44 @@ class Bienvenida extends StatelessWidget {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(28),
-            child: Column(children: [
-              const Logo(tam: 220),
-              const SizedBox(height: 12),
-              const Text('Tu madera, tu idea, nuestro oficio.',
-                  style: TextStyle(fontSize: 15, color: Colores.madera, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 36),
-              Theme(
-                data: construirTema(paletaCarpintero),
-                child: Builder(
-                  builder: (c) => BotonPrincipal('Soy carpintero', () => ir(c, const Acceso(rol: 'carpintero')),
-                      icono: Icons.handyman_outlined),
+            child: Column(
+              children: [
+                const Logo(tam: 220),
+                const SizedBox(height: 12),
+                const Text(
+                  'Tu madera, tu idea, nuestro vínculo.',
+                  style: TextStyle(fontSize: 15, color: Colores.madera, fontWeight: FontWeight.w600),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Theme(
-                data: construirTema(paletaCliente),
-                child: Builder(
-                  builder: (c) => BotonPrincipal('Soy cliente', () => ir(c, const Acceso(rol: 'cliente')),
-                      icono: Icons.chair_outlined),
+                const SizedBox(height: 36),
+                Theme(
+                  data: construirTema(paletaCarpintero),
+                  child: Builder(
+                    builder: (c) => BotonPrincipal(
+                      'Soy carpintero',
+                      () => ir(c, const Acceso(rol: 'carpintero')),
+                      icono: Icons.handyman_outlined,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 28),
-              if (sesion.error != null) Aviso.alerta(sesion.error!),
-              Text('Diseñamos contigo. Creamos para ti.',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-            ]),
+                const SizedBox(height: 12),
+                Theme(
+                  data: construirTema(paletaCliente),
+                  child: Builder(
+                    builder: (c) => BotonPrincipal(
+                      'Soy cliente',
+                      () => ir(c, const Acceso(rol: 'cliente')),
+                      icono: Icons.chair_outlined,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                if (sesion.error != null) Aviso.alerta(sesion.error!),
+                Text(
+                  'Diseñamos contigo. Creamos para ti.',
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -126,8 +138,9 @@ class _AccesoState extends State<Acceso> {
             builder: (d) => AlertDialog.adaptive(
               title: const Text('Revisa tu correo'),
               content: Text(
-                  'Te enviamos un enlace a ${_correo.text.trim()} para confirmar tu cuenta. '
-                  'Después de confirmarla, vuelve aquí e inicia sesión.'),
+                'Te enviamos un enlace a ${_correo.text.trim()} para confirmar tu cuenta. '
+                'Después de confirmarla, vuelve aquí e inicia sesión.',
+              ),
               actions: [TextButton(onPressed: () => Navigator.pop(d), child: const Text('Entendido'))],
             ),
           );
@@ -155,15 +168,18 @@ class _AccesoState extends State<Acceso> {
       context: context,
       builder: (d) => AlertDialog(
         title: const Text('Recuperar contraseña'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Te enviaremos un enlace para crear una contraseña nueva.'),
-          const SizedBox(height: 12),
-          TextField(
-            controller: correo,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(hintText: 'Correo electrónico'),
-          ),
-        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Te enviaremos un enlace para crear una contraseña nueva.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: correo,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(hintText: 'Correo electrónico'),
+            ),
+          ],
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Cancelar')),
           TextButton(onPressed: () => Navigator.pop(d, true), child: const Text('Enviar enlace')),
@@ -175,8 +191,11 @@ class _AccesoState extends State<Acceso> {
       avisar(context, 'Escribe un correo válido.', error: true);
       return;
     }
-    await conCarga(context, () => sesion.recuperarClave(correo.text),
-        exito: 'Listo. Revisa tu correo para crear una contraseña nueva.');
+    await conCarga(
+      context,
+      () => sesion.recuperarClave(correo.text),
+      exito: 'Listo. Revisa tu correo para crear una contraseña nueva.',
+    );
   }
 
   String? _requerido(String? v) => (v == null || v.trim().isEmpty) ? 'Este dato es obligatorio' : null;
@@ -186,105 +205,130 @@ class _AccesoState extends State<Acceso> {
     final paleta = _carp ? paletaCarpintero : paletaCliente;
     return Theme(
       data: construirTema(paleta),
-      child: Builder(builder: (context) {
-        final cs = Theme.of(context).colorScheme;
-        return Scaffold(
-          body: SafeArea(
-            child: Form(
-              key: _form,
-              child: AutofillGroup(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
-                  children: [
-                    Marca(_carp ? 'Carpintero' : 'Cliente', atras: true),
-                    const SizedBox(height: 8),
-                    const Center(child: Logo(tam: 140)),
-                    Titulo(
-                      _registro
-                          ? 'Crear cuenta'
-                          : (_carp ? 'Tu taller, bajo control' : 'Bienvenido a CarpiApp'),
-                      subtitulo: _carp
-                          ? 'Pedidos, cotizaciones y clientes en un solo lugar'
-                          : 'Diseñamos contigo. Creamos para ti.',
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                        SegmentedButton<bool>(
-                          segments: const [
-                            ButtonSegment(value: false, label: Text('Iniciar sesión')),
-                            ButtonSegment(value: true, label: Text('Crear cuenta')),
-                          ],
-                          selected: {_registro},
-                          showSelectedIcon: false,
-                          onSelectionChanged: _cargando ? null : (s) => setState(() {
-                                _registro = s.first;
-                                _error = null;
-                              }),
-                        ),
-                        const SizedBox(height: 16),
-                        if (_registro) ...[
-                          Campo('Nombre completo', _nombre,
-                              validar: _requerido,
-                              mayusculas: TextCapitalization.words,
-                              autollenado: const [AutofillHints.name]),
-                          if (_carp)
-                            Campo('Nombre de tu carpintería', _taller,
-                                pista: 'Ej. Carpintería Arbor',
-                                validar: _requerido,
-                                mayusculas: TextCapitalization.words),
-                          Campo('Teléfono', _telefono,
-                              teclado: TextInputType.phone,
-                              pista: '10 dígitos',
-                              autollenado: const [AutofillHints.telephoneNumber]),
-                        ],
-                        Campo('Correo electrónico', _correo,
-                            teclado: TextInputType.emailAddress,
-                            mayusculas: TextCapitalization.none,
-                            autollenado: const [AutofillHints.email],
-                            validar: (v) => (v == null || !v.contains('@') || !v.contains('.'))
-                                ? 'Escribe un correo válido'
-                                : null),
-                        Campo('Contraseña', _clave,
-                            oculto: !_ver,
-                            mayusculas: TextCapitalization.none,
-                            autollenado: [_registro ? AutofillHints.newPassword : AutofillHints.password],
-                            sufijo: IconButton(
-                              icon: Icon(_ver ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                              onPressed: () => setState(() => _ver = !_ver),
+      child: Builder(
+        builder: (context) {
+          final cs = Theme.of(context).colorScheme;
+          return Scaffold(
+            body: SafeArea(
+              child: Form(
+                key: _form,
+                child: AutofillGroup(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 24),
+                    children: [
+                      Marca(_carp ? 'Carpintero' : 'Cliente', atras: true),
+                      const SizedBox(height: 8),
+                      const Center(child: Logo(tam: 140)),
+                      Titulo(
+                        _registro ? 'Crear cuenta' : (_carp ? 'Tu taller, bajo control' : 'Bienvenido a CarpiApp'),
+                        subtitulo: _carp
+                            ? 'Pedidos, cotizaciones y clientes en un solo lugar'
+                            : 'Diseñamos contigo. Creamos para ti.',
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SegmentedButton<bool>(
+                              segments: const [
+                                ButtonSegment(value: false, label: Text('Iniciar sesión')),
+                                ButtonSegment(value: true, label: Text('Crear cuenta')),
+                              ],
+                              selected: {_registro},
+                              showSelectedIcon: false,
+                              onSelectionChanged: _cargando
+                                  ? null
+                                  : (s) => setState(() {
+                                      _registro = s.first;
+                                      _error = null;
+                                    }),
                             ),
-                            validar: (v) => (v == null || v.length < 6) ? 'Mínimo 6 caracteres' : null),
-                        if (_registro)
-                          Campo('Confirmar contraseña', _clave2,
+                            const SizedBox(height: 16),
+                            if (_registro) ...[
+                              Campo(
+                                'Nombre completo',
+                                _nombre,
+                                validar: _requerido,
+                                mayusculas: TextCapitalization.words,
+                                autollenado: const [AutofillHints.name],
+                              ),
+                              if (_carp)
+                                Campo(
+                                  'Nombre de tu carpintería',
+                                  _taller,
+                                  pista: 'Ej. Carpintería Arbor',
+                                  validar: _requerido,
+                                  mayusculas: TextCapitalization.words,
+                                ),
+                              Campo(
+                                'Teléfono',
+                                _telefono,
+                                teclado: TextInputType.phone,
+                                pista: '10 dígitos',
+                                autollenado: const [AutofillHints.telephoneNumber],
+                              ),
+                            ],
+                            Campo(
+                              'Correo electrónico',
+                              _correo,
+                              teclado: TextInputType.emailAddress,
+                              mayusculas: TextCapitalization.none,
+                              autollenado: const [AutofillHints.email],
+                              validar: (v) => (v == null || !v.contains('@') || !v.contains('.'))
+                                  ? 'Escribe un correo válido'
+                                  : null,
+                            ),
+                            Campo(
+                              'Contraseña',
+                              _clave,
                               oculto: !_ver,
                               mayusculas: TextCapitalization.none,
-                              validar: (v) => v != _clave.text ? 'Las contraseñas no coinciden' : null),
-                        if (_error != null) Aviso.alerta(_error!),
-                        if (!_registro)
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                                onPressed: _cargando ? null : _olvide, child: const Text('¿Olvidaste tu contraseña?')),
-                          ),
-                        const SizedBox(height: 8),
-                        BotonPrincipal(_registro ? 'Crear cuenta' : 'Iniciar sesión', _enviar, cargando: _cargando),
-                        const SizedBox(height: 16),
-                        Text(
-                          _carp
-                              ? 'Cada carpintero administra su propia carpintería: sus clientes, pedidos y finanzas solo los ve él.'
-                              : 'Puedes pedir cotizaciones a cualquier carpintería registrada.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                              autollenado: [_registro ? AutofillHints.newPassword : AutofillHints.password],
+                              sufijo: IconButton(
+                                icon: Icon(_ver ? Icons.visibility_off_outlined : Icons.visibility_outlined),
+                                onPressed: () => setState(() => _ver = !_ver),
+                              ),
+                              validar: (v) => (v == null || v.length < 6) ? 'Mínimo 6 caracteres' : null,
+                            ),
+                            if (_registro)
+                              Campo(
+                                'Confirmar contraseña',
+                                _clave2,
+                                oculto: !_ver,
+                                mayusculas: TextCapitalization.none,
+                                validar: (v) => v != _clave.text ? 'Las contraseñas no coinciden' : null,
+                              ),
+                            if (_error != null) Aviso.alerta(_error!),
+                            if (!_registro)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: _cargando ? null : _olvide,
+                                  child: const Text('¿Olvidaste tu contraseña?'),
+                                ),
+                              ),
+                            const SizedBox(height: 8),
+                            BotonPrincipal(_registro ? 'Crear cuenta' : 'Iniciar sesión', _enviar, cargando: _cargando),
+                            const SizedBox(height: 16),
+                            Text(
+                              _carp
+                                  ? 'Cada carpintero administra su propia carpintería: sus clientes, pedidos y finanzas solo los ve él.'
+                                  : 'Puedes pedir cotizaciones a cualquier carpintería registrada.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                            ),
+                          ],
                         ),
-                      ]),
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      }),
+          );
+        },
+      ),
     );
   }
 }
@@ -319,20 +363,31 @@ class _NuevaClaveState extends State<NuevaClave> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        body: SafeArea(
-          child: Form(
-            key: _form,
-            child: ListView(padding: const EdgeInsets.all(20), children: [
-              const Center(child: Logo(tam: 140)),
-              const Titulo('Crea tu nueva contraseña', subtitulo: 'Usa al menos 6 caracteres.'),
-              Campo('Nueva contraseña', _clave,
-                  oculto: true, validar: (v) => (v == null || v.length < 6) ? 'Mínimo 6 caracteres' : null),
-              Campo('Confirmar contraseña', _clave2,
-                  oculto: true, validar: (v) => v != _clave.text ? 'Las contraseñas no coinciden' : null),
-              const SizedBox(height: 8),
-              BotonPrincipal('Guardar contraseña', _guardar, cargando: _cargando),
-            ]),
-          ),
+    body: SafeArea(
+      child: Form(
+        key: _form,
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            const Center(child: Logo(tam: 140)),
+            const Titulo('Crea tu nueva contraseña', subtitulo: 'Usa al menos 6 caracteres.'),
+            Campo(
+              'Nueva contraseña',
+              _clave,
+              oculto: true,
+              validar: (v) => (v == null || v.length < 6) ? 'Mínimo 6 caracteres' : null,
+            ),
+            Campo(
+              'Confirmar contraseña',
+              _clave2,
+              oculto: true,
+              validar: (v) => v != _clave.text ? 'Las contraseñas no coinciden' : null,
+            ),
+            const SizedBox(height: 8),
+            BotonPrincipal('Guardar contraseña', _guardar, cargando: _cargando),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }

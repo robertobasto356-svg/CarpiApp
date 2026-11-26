@@ -55,9 +55,7 @@ class CarpiApp extends StatelessWidget {
     if (sesion.recuperandoClave) return const NuevaClave();
     final p = sesion.perfil;
     if (p == null) return const Bienvenida();
-    return p.esCarpintero
-        ? ShellCarpintero(key: ValueKey('c-${p.id}'))
-        : ShellCliente(key: ValueKey('k-${p.id}'));
+    return p.esCarpintero ? ShellCarpintero(key: ValueKey('c-${p.id}')) : ShellCliente(key: ValueKey('k-${p.id}'));
   }
 }
 
@@ -66,12 +64,11 @@ class _Arranque extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => const Scaffold(
-        body: Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Logo(tam: 160),
-            SizedBox(height: 24),
-            CircularProgressIndicator.adaptive(),
-          ]),
-        ),
-      );
+    body: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [Logo(tam: 160), SizedBox(height: 24), CircularProgressIndicator.adaptive()],
+      ),
+    ),
+  );
 }

@@ -82,64 +82,76 @@ class _NivelPantallaState extends State<NivelPantalla> {
       seccion: 'Sensores',
       titulo: 'Nivel digital',
       subtitulo: 'Usa el acelerómetro del celular para revisar nivel y plomo',
-      cuerpo: ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 24), children: [
-        Pildoras(const ['Superficie (piso, cubierta)', 'Plomo (muro, marco)'], _modo, (i) => setState(() => _modo = i)),
-        const SizedBox(height: 16),
-        if (_sinSensor)
-          const Aviso.alerta('Este dispositivo no tiene acelerómetro disponible.')
-        else ...[
-          Center(
-            child: _modo == 0
-                ? _burbujaCircular(cs, color)
-                : _burbujaLineal(cs, color),
-          ),
+      cuerpo: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        children: [
+          Pildoras(const ['Nivel (piso)', 'Plomo (muro)'], _modo, (i) => setState(() => _modo = i)),
           const SizedBox(height: 16),
-          Center(
-            child: Text('${angulo.toStringAsFixed(1)}°',
-                style: TextStyle(fontSize: 48, fontWeight: FontWeight.w800, color: color)),
-          ),
-          Center(
-            child: Text(
-              nivelado ? (_modo == 0 ? 'Nivelado' : 'A plomo') : 'Inclinado',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color),
-            ),
-          ),
-          if (_modo == 0)
+          if (_sinSensor)
+            const Aviso.alerta('Este dispositivo no tiene acelerómetro disponible.')
+          else ...[
+            Center(child: _modo == 0 ? _burbujaCircular(cs, color) : _burbujaLineal(cs, color)),
+            const SizedBox(height: 16),
             Center(
-              child: Text('Inclinación X ${_angX.toStringAsFixed(1)}° · Y ${_angY.toStringAsFixed(1)}°',
-                  style: TextStyle(color: cs.onSurfaceVariant)),
+              child: Text(
+                '${angulo.toStringAsFixed(1)}°',
+                style: TextStyle(fontSize: 48, fontWeight: FontWeight.w800, color: color),
+              ),
             ),
-          const SizedBox(height: 20),
-          Aviso(
-            _modo == 0
-                ? 'Coloca el celular boca arriba sobre la superficie. Útil para revisar pisos y cubiertas antes de instalar.'
-                : 'Apoya el canto largo del celular contra el muro o marco en posición vertical.',
-            icono: Icons.lightbulb_outline,
-          ),
-          Row(children: [
-            Expanded(
-              child: BotonSecundario('Calibrar en cero', () {
-                setState(() {
-                  if (_modo == 0) {
-                    _offX = _angX + _offX;
-                    _offY = _angY + _offY;
-                  } else {
-                    _offPlomo = _plomo + _offPlomo;
-                  }
-                });
-                avisar(context, 'Calibrado: la posición actual es el nuevo cero.');
-              }, icono: Icons.center_focus_strong_outlined),
+            Center(
+              child: Text(
+                nivelado ? (_modo == 0 ? 'Nivelado' : 'A plomo') : 'Inclinado',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color),
+              ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: BotonSecundario('Restablecer', () => setState(() => _offX = _offY = _offPlomo = 0), icono: Icons.restart_alt),
+            if (_modo == 0)
+              Center(
+                child: Text(
+                  'Inclinación X ${_angX.toStringAsFixed(1)}° · Y ${_angY.toStringAsFixed(1)}°',
+                  style: TextStyle(color: cs.onSurfaceVariant),
+                ),
+              ),
+            const SizedBox(height: 20),
+            Aviso(
+              _modo == 0
+                  ? 'Coloca el celular boca arriba sobre la superficie. Útil para revisar pisos y cubiertas antes de instalar.'
+                  : 'Apoya el canto largo del celular contra el muro o marco en posición vertical.',
+              icono: Icons.lightbulb_outline,
             ),
-          ]),
-          const SizedBox(height: 10),
-          Text('Precisión aproximada de ±0.5° según el sensor del teléfono. Para trabajos finos, verifica con nivel de burbuja.',
-              textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+            Row(
+              children: [
+                Expanded(
+                  child: BotonSecundario('Calibrar en cero', () {
+                    setState(() {
+                      if (_modo == 0) {
+                        _offX = _angX + _offX;
+                        _offY = _angY + _offY;
+                      } else {
+                        _offPlomo = _plomo + _offPlomo;
+                      }
+                    });
+                    avisar(context, 'Calibrado: la posición actual es el nuevo cero.');
+                  }, icono: Icons.center_focus_strong_outlined),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: BotonSecundario(
+                    'Restablecer',
+                    () => setState(() => _offX = _offY = _offPlomo = 0),
+                    icono: Icons.restart_alt,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Precisión aproximada de ±0.5° según el sensor del teléfono. Para trabajos finos, verifica con nivel de burbuja.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 
@@ -155,19 +167,29 @@ class _NivelPantallaState extends State<NivelPantalla> {
         color: cs.primaryContainer.withValues(alpha: .5),
         border: Border.all(color: cs.outline, width: 2),
       ),
-      child: Stack(alignment: Alignment.center, children: [
-        Container(width: 60, height: 60, decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: cs.primary, width: 2))),
-        Container(width: 1, height: tam, color: cs.outline),
-        Container(width: tam, height: 1, color: cs.outline),
-        Transform.translate(
-          offset: Offset(dx, dy),
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: .85)),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: cs.primary, width: 2),
+            ),
           ),
-        ),
-      ]),
+          Container(width: 1, height: tam, color: cs.outline),
+          Container(width: tam, height: 1, color: cs.outline),
+          Transform.translate(
+            offset: Offset(dx, dy),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: .85)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -182,13 +204,26 @@ class _NivelPantallaState extends State<NivelPantalla> {
         color: cs.primaryContainer.withValues(alpha: .5),
         border: Border.all(color: cs.outline, width: 2),
       ),
-      child: Stack(alignment: Alignment.center, children: [
-        Container(width: 60, height: 70, decoration: BoxDecoration(border: Border.symmetric(vertical: BorderSide(color: cs.primary, width: 2)))),
-        Transform.translate(
-          offset: Offset(dx, 0),
-          child: Container(width: 46, height: 46, decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: .85))),
-        ),
-      ]),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 60,
+            height: 70,
+            decoration: BoxDecoration(
+              border: Border.symmetric(vertical: BorderSide(color: cs.primary, width: 2)),
+            ),
+          ),
+          Transform.translate(
+            offset: Offset(dx, 0),
+            child: Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: .85)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -207,7 +242,16 @@ class VistaArPantalla extends StatefulWidget {
 
 class _VistaArPantallaState extends State<VistaArPantalla> {
   late String _tipo = widget.tipoMueble;
-  static const _opciones = ['Clóset', 'Cocina', 'Mesa de comedor', 'Escritorio', 'Librero', 'Cama', 'Puerta', 'Mueble de TV'];
+  static const _opciones = [
+    'Clóset',
+    'Cocina',
+    'Mesa de comedor',
+    'Escritorio',
+    'Librero',
+    'Cama',
+    'Puerta',
+    'Mueble de TV',
+  ];
 
   /// ¿Los modelos están publicados en Supabase Storage (bucket `modelos`)?
   /// Si no, la vista 3D usa los archivos incluidos en la app.
@@ -248,67 +292,99 @@ class _VistaArPantallaState extends State<VistaArPantalla> {
       seccion: p == null ? 'Realidad aumentada' : 'Pedido · ${p.cliente?.nombre ?? p.carpinteria?.nombre ?? ''}',
       titulo: 'Vista en el espacio',
       subtitulo: 'Referencia visual del mueble para revisar con el cliente.',
-      cuerpo: ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 20), children: [
-        SizedBox(
-          height: 360,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Stack(children: [
-              ModelViewer(
-                key: ValueKey('$modelo-$remoto'),
-                src: remoto ? Config.modelo('$modelo.glb') : 'assets/modelos/$modelo.glb',
-                iosSrc: remoto ? Config.modelo('$modelo.usdz') : null,
-                alt: 'Modelo de referencia · $_tipo',
-                ar: true,
-                arModes: const ['scene-viewer', 'webxr', 'quick-look'],
-                arPlacement: ArPlacement.floor,
-                arScale: ArScale.fixed,
-                autoRotate: true,
-                cameraControls: true,
-                backgroundColor: const Color(0xFFEFE7DE),
-                shadowIntensity: 1,
+      cuerpo: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        children: [
+          SizedBox(
+            height: 360,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Stack(
+                children: [
+                  ModelViewer(
+                    key: ValueKey('$modelo-$remoto'),
+                    src: remoto ? Config.modelo('$modelo.glb') : 'assets/modelos/$modelo.glb',
+                    iosSrc: remoto ? Config.modelo('$modelo.usdz') : null,
+                    alt: 'Modelo de referencia · $_tipo',
+                    ar: true,
+                    arModes: const ['scene-viewer', 'webxr', 'quick-look'],
+                    arPlacement: ArPlacement.floor,
+                    arScale: ArScale.fixed,
+                    autoRotate: true,
+                    cameraControls: true,
+                    backgroundColor: const Color(0xFFEFE7DE),
+                    // El paquete escribe mal `shadow-intensity`; la sombra se activa por JS.
+                    id: 'mueble',
+                    relatedJs: "document.getElementById('mueble').shadowIntensity = 1;",
+                    innerModelViewerHtml:
+                        '<div slot="poster" style="display:flex;align-items:center;justify-content:center;'
+                        'height:100%;font:600 15px sans-serif;color:#7A6A5C">Cargando modelo 3D…</div>',
+                  ),
+                  Positioned(
+                    left: 12,
+                    top: 12,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: .6),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.circle, size: 8, color: Color(0xFF6FD39A)),
+                          SizedBox(width: 6),
+                          Text(
+                            'Toca el ícono AR para verlo en tu espacio',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              Positioned(
-                left: 12,
-                top: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: Colors.black.withValues(alpha: .6), borderRadius: BorderRadius.circular(20)),
-                  child: const Row(children: [
-                    Icon(Icons.circle, size: 8, color: Color(0xFF6FD39A)),
-                    SizedBox(width: 6),
-                    Text('Toca el ícono AR para verlo en tu espacio', style: TextStyle(color: Colors.white, fontSize: 12)),
-                  ]),
-                ),
-              ),
-            ]),
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Text('Modelo de referencia · $_tipo', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
-        const SizedBox(height: 8),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(children: [
-            for (final o in _opciones)
-              Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: ChoiceChip(label: Text(o), selected: o == _tipo, onSelected: (_) => setState(() => _tipo = o)),
-              ),
-          ]),
-        ),
-        const SizedBox(height: 12),
-        const Aviso.alerta(
-          'Vista aproximada para conversar con el cliente. No representa medidas exactas ni sustituye la revisión del espacio por el carpintero.',
-          icono: Icons.info_outline,
-        ),
-        Text('En Android se abre con Scene Viewer (Google) y en iPhone con AR Quick Look. Requiere un equipo compatible con realidad aumentada.',
-            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-      ]),
+          const SizedBox(height: 12),
+          Text('Modelo de referencia · $_tipo', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final o in _opciones)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      label: Text(o),
+                      selected: o == _tipo,
+                      onSelected: (_) => setState(() => _tipo = o),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Aviso.alerta(
+            'Vista aproximada para conversar con el cliente. No representa medidas exactas ni sustituye la revisión del espacio por el carpintero.',
+            icono: Icons.info_outline,
+          ),
+          Text(
+            'En Android se abre con Scene Viewer (Google) y en iPhone con AR Quick Look. Requiere un equipo compatible con realidad aumentada.',
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+          ),
+        ],
+      ),
       pie: p != null && sesion.esCarpintero
           ? BotonPrincipal('Guardar vista en el pedido', () async {
-              await conCarga(context, () => Api.agregarNota(p, 'Se revisó con el cliente la vista en realidad aumentada (modelo de referencia: $_tipo).'),
-                  exito: 'Se registró en el historial del pedido');
+              await conCarga(
+                context,
+                () => Api.agregarNota(
+                  p,
+                  'Se revisó con el cliente la vista en realidad aumentada (modelo de referencia: $_tipo).',
+                ),
+                exito: 'Se registró en el historial del pedido',
+              );
             }, icono: Icons.bookmark_add_outlined)
           : null,
     );
@@ -380,60 +456,100 @@ class _CapturaReferenciaState extends State<CapturaReferencia> {
     return PantallaBase(
       seccion: 'Pedido · Referencia',
       titulo: 'Foto del proyecto',
-      cuerpo: ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 20), children: [
-        Tarjeta(
-          child: Row(children: [
-            CircleAvatar(radius: 14, backgroundColor: cs.primaryContainer, child: Icon(Icons.circle, size: 10, color: cs.primary)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${p.cliente?.nombre ?? ''} · ${p.titulo}', style: const TextStyle(fontWeight: FontWeight.w700)),
-                Text('${p.est.etiqueta} · Pedido ${p.folio}', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-              ]),
+      cuerpo: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        children: [
+          Tarjeta(
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: cs.primaryContainer,
+                  child: Icon(Icons.circle, size: 10, color: cs.primary),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${p.cliente?.nombre ?? ''} · ${p.titulo}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        '${p.est.etiqueta} · Pedido ${p.folio}',
+                        style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ]),
-        ),
-        _Visor(foto: _foto, texto: 'Encuadra el mueble completo'),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(child: BotonPrincipal('Tomar foto', () => _tomar(ImageSource.camera), icono: Icons.photo_camera_outlined)),
-          const SizedBox(width: 10),
-          Expanded(child: BotonSecundario('Elegir foto', () => _tomar(ImageSource.gallery), icono: Icons.photo_library_outlined)),
-        ]),
-        const SizedBox(height: 14),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(color: Colores.ia, borderRadius: BorderRadius.circular(16)),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Text('✦ APOYO DE IA', style: TextStyle(color: Colores.iaTexto, fontWeight: FontWeight.w800, fontSize: 12)),
-            const SizedBox(height: 6),
-            const Text(
-              'La IA describe elementos visibles y organiza la información de la solicitud. No indica cómo fabricar ni elige materiales por el carpintero.',
-              style: TextStyle(color: Colores.iaTexto),
-            ),
-            const SizedBox(height: 6),
-            Text('Si preguntan por maderas, consulta fichas locales verificadas de Mérida y alrededores.',
-                style: TextStyle(color: Colores.iaTexto.withValues(alpha: .75), fontSize: 12.5)),
-            if (_analizando) ...[
-              const SizedBox(height: 10),
-              const LinearProgressIndicator(),
-            ],
-            if (_foto != null && !_analizando) ...[
-              const SizedBox(height: 10),
-              TextField(
-                controller: _texto,
-                maxLines: 4,
-                minLines: 2,
-                decoration: InputDecoration(
-                  hintText: _ia.isEmpty ? 'No se reconocieron objetos. Describe la referencia…' : null,
+          ),
+          _Visor(foto: _foto, texto: 'Encuadra el mueble completo'),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: BotonPrincipal(
+                  'Tomar foto',
+                  () => _tomar(ImageSource.camera),
+                  icono: Icons.photo_camera_outlined,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: BotonSecundario(
+                  'Elegir foto',
+                  () => _tomar(ImageSource.gallery),
+                  icono: Icons.photo_library_outlined,
                 ),
               ),
             ],
-          ]),
-        ),
-        const SizedBox(height: 8),
-        Text('Revisa el texto generado antes de guardarlo.', style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-      ]),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(color: Colores.ia, borderRadius: BorderRadius.circular(16)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '✦ APOYO DE IA',
+                  style: TextStyle(color: Colores.iaTexto, fontWeight: FontWeight.w800, fontSize: 12),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'La IA describe elementos visibles y organiza la información de la solicitud. No indica cómo fabricar ni elige materiales por el carpintero.',
+                  style: TextStyle(color: Colores.iaTexto),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Si preguntan por maderas, consulta fichas locales verificadas de Mérida y alrededores.',
+                  style: TextStyle(color: Colores.iaTexto.withValues(alpha: .75), fontSize: 12.5),
+                ),
+                if (_analizando) ...[const SizedBox(height: 10), const LinearProgressIndicator()],
+                if (_foto != null && !_analizando) ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _texto,
+                    maxLines: 4,
+                    minLines: 2,
+                    decoration: InputDecoration(
+                      hintText: _ia.isEmpty ? 'No se reconocieron objetos. Describe la referencia…' : null,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Revisa el texto generado antes de guardarlo.',
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+          ),
+        ],
+      ),
       pie: BotonPrincipal('Guardar referencia', _foto == null ? null : _guardar, cargando: _guardando),
     );
   }
@@ -446,14 +562,16 @@ class _Visor extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: AspectRatio(
-          aspectRatio: 4 / 3,
-          child: Stack(fit: StackFit.expand, children: [
-            Container(color: const Color(0xFF353A34)),
-            if (foto != null) Image.memory(foto!, fit: BoxFit.cover),
-            if (foto == null)
-              const Center(child: Icon(Icons.center_focus_weak, color: Colors.white54, size: 64)),
+    borderRadius: BorderRadius.circular(18),
+    child: AspectRatio(
+      aspectRatio: 4 / 3,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(color: const Color(0xFF353A34)),
+          if (foto != null) Image.memory(foto!, fit: BoxFit.cover),
+          if (foto == null) const Center(child: Icon(Icons.center_focus_weak, color: Colors.white54, size: 64)),
+          if (foto == null)
             Positioned(
               left: 12,
               bottom: 12,
@@ -463,9 +581,10 @@ class _Visor extends StatelessWidget {
                 child: Text(texto, style: const TextStyle(color: Colors.white, fontSize: 12)),
               ),
             ),
-          ]),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 }
 
 // =====================================================================
@@ -512,7 +631,12 @@ class _CamaraClienteState extends State<CamaraCliente> {
     }
     setState(() => _guardando = true);
     try {
-      await Api.subirFoto(pedido: widget.pedido!, bytes: fp.bytes, descripcion: fp.descripcion, descripcionIa: fp.descripcionIa);
+      await Api.subirFoto(
+        pedido: widget.pedido!,
+        bytes: fp.bytes,
+        descripcion: fp.descripcion,
+        descripcionIa: fp.descripcionIa,
+      );
       if (mounted) {
         avisar(context, 'Foto adjuntada al pedido');
         Navigator.pop(context, fp);
@@ -534,54 +658,88 @@ class _CamaraClienteState extends State<CamaraCliente> {
       subtitulo: revisando
           ? 'Puedes editar la descripción antes de continuar.'
           : 'Toma una foto del espacio o elige una imagen',
-      cuerpo: ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 20), children: [
-        _Visor(foto: _foto, texto: 'Encuadra el espacio o el mueble'),
-        const SizedBox(height: 12),
-        if (!revisando) ...[
-          Text('La foto es una referencia visual; no se utilizará para calcular medidas.',
-              textAlign: TextAlign.center, style: TextStyle(color: cs.onSurfaceVariant)),
-          const SizedBox(height: 14),
-          Row(children: [
-            Expanded(child: BotonSecundario('Galería', () => _tomar(ImageSource.gallery), icono: Icons.photo_library_outlined)),
-            const SizedBox(width: 10),
-            Expanded(child: BotonPrincipal('Capturar', () => _tomar(ImageSource.camera), icono: Icons.photo_camera_outlined)),
-          ]),
+      cuerpo: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        children: [
+          _Visor(foto: _foto, texto: 'Encuadra el espacio o el mueble'),
           const SizedBox(height: 12),
-          Text('Puedes adjuntar varias fotos y añadir una descripción.',
-              textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-        ] else ...[
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(color: Colores.ia, borderRadius: BorderRadius.circular(16)),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('✦ DESCRIPCIÓN SUGERIDA POR IA',
-                  style: TextStyle(color: Colores.iaTexto, fontWeight: FontWeight.w800, fontSize: 12)),
-              const SizedBox(height: 8),
-              if (_analizando)
-                const LinearProgressIndicator()
-              else
-                TextField(
-                  controller: _texto,
-                  maxLines: 5,
-                  minLines: 2,
-                  decoration: const InputDecoration(hintText: 'Toca para editar o añade detalles propios…'),
+          if (!revisando) ...[
+            Text(
+              'La foto es una referencia visual; no se utilizará para calcular medidas.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: BotonSecundario(
+                    'Galería',
+                    () => _tomar(ImageSource.gallery),
+                    icono: Icons.photo_library_outlined,
+                  ),
                 ),
-            ]),
-          ),
-          const SizedBox(height: 12),
-          Row(children: [
-            Expanded(child: BotonSecundario('Volver a tomar', () => setState(() => _foto = null), icono: Icons.refresh)),
-            const SizedBox(width: 10),
-            Expanded(child: BotonPrincipal('Adjuntar al pedido', _analizando ? null : _adjuntar, cargando: _guardando)),
-          ]),
-          const SizedBox(height: 10),
-          Text(
+                const SizedBox(width: 10),
+                Expanded(
+                  child: BotonPrincipal(
+                    'Capturar',
+                    () => _tomar(ImageSource.camera),
+                    icono: Icons.photo_camera_outlined,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Puedes adjuntar varias fotos y añadir una descripción.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            ),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: Colores.ia, borderRadius: BorderRadius.circular(16)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '✦ DESCRIPCIÓN SUGERIDA POR IA',
+                    style: TextStyle(color: Colores.iaTexto, fontWeight: FontWeight.w800, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_analizando)
+                    const LinearProgressIndicator()
+                  else
+                    TextField(
+                      controller: _texto,
+                      maxLines: 5,
+                      minLines: 2,
+                      decoration: const InputDecoration(hintText: 'Toca para editar o añade detalles propios…'),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: BotonSecundario('Volver a tomar', () => setState(() => _foto = null), icono: Icons.refresh),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: BotonPrincipal('Adjuntar al pedido', _analizando ? null : _adjuntar, cargando: _guardando),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
               'La descripción es orientativa. El carpintero revisará contigo los detalles del proyecto; no se generan propuestas de diseño.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
-

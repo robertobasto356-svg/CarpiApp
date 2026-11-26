@@ -92,8 +92,7 @@ class EstadoPedido {
     EstadoPedido('cancelado', 'Cancelado', Color(0xFF8D8D8D), 0),
   ];
 
-  static EstadoPedido de(String clave) =>
-      todos.firstWhere((e) => e.clave == clave, orElse: () => todos.first);
+  static EstadoPedido de(String clave) => todos.firstWhere((e) => e.clave == clave, orElse: () => todos.first);
 
   static const nuevos = ['solicitado', 'cita_agendada', 'en_cotizacion', 'ajustes_solicitados'];
   static const enProceso = ['aceptado', 'en_fabricacion', 'por_entregar'];
@@ -134,17 +133,17 @@ class Perfil {
   bool get esCarpintero => rol == 'carpintero';
 
   factory Perfil.desde(Map<String, dynamic> m) => Perfil(
-        id: _txt(m['id']),
-        rol: _txt(m['rol']),
-        nombre: _txt(m['nombre']),
-        telefono: _txt(m['telefono']),
-        direccion: _txt(m['direccion']),
-        ciudad: _txt(m['ciudad']),
-        rfc: _txt(m['rfc']),
-        metodoPago: _txt(m['metodo_pago']),
-        notificaciones: m['notificaciones'] != false,
-        avatarPath: m['avatar_path'] as String?,
-      );
+    id: _txt(m['id']),
+    rol: _txt(m['rol']),
+    nombre: _txt(m['nombre']),
+    telefono: _txt(m['telefono']),
+    direccion: _txt(m['direccion']),
+    ciudad: _txt(m['ciudad']),
+    rfc: _txt(m['rfc']),
+    metodoPago: _txt(m['metodo_pago']),
+    notificaciones: m['notificaciones'] != false,
+    avatarPath: m['avatar_path'] as String?,
+  );
 }
 
 class Carpinteria {
@@ -224,20 +223,22 @@ class Cliente {
   bool get tieneCuenta => perfilId != null;
 
   factory Cliente.desde(Map<String, dynamic> m) => Cliente(
-        id: _int(m['id']),
-        carpinteriaId: _txt(m['carpinteria_id']),
-        perfilId: m['perfil_id'] as String?,
-        nombre: _txt(m['nombre']),
-        telefono: _txt(m['telefono']),
-        correo: _txt(m['correo']),
-        direccion: _txt(m['direccion']),
-        notas: _txt(m['notas']),
-        pedidos: m['pedidos'] is List
-            ? (m['pedidos'] as List).isNotEmpty && (m['pedidos'] as List).first is Map && (m['pedidos'] as List).first['count'] != null
-                ? _int((m['pedidos'] as List).first['count'])
-                : (m['pedidos'] as List).length
-            : 0,
-      );
+    id: _int(m['id']),
+    carpinteriaId: _txt(m['carpinteria_id']),
+    perfilId: m['perfil_id'] as String?,
+    nombre: _txt(m['nombre']),
+    telefono: _txt(m['telefono']),
+    correo: _txt(m['correo']),
+    direccion: _txt(m['direccion']),
+    notas: _txt(m['notas']),
+    pedidos: m['pedidos'] is List
+        ? (m['pedidos'] as List).isNotEmpty &&
+                  (m['pedidos'] as List).first is Map &&
+                  (m['pedidos'] as List).first['count'] != null
+              ? _int((m['pedidos'] as List).first['count'])
+              : (m['pedidos'] as List).length
+        : 0,
+  );
 }
 
 class Pedido {
@@ -288,11 +289,9 @@ class Pedido {
   String get folio => 'P-${id.toString().padLeft(4, '0')}';
   EstadoPedido get est => EstadoPedido.de(estado);
   bool get tieneMedidas => alto != null && ancho != null && fondo != null;
-  String get medidasTexto => tieneMedidas
-      ? 'Alto ${_cm(alto)} · Ancho ${_cm(ancho)} · Fondo ${_cm(fondo)}'
-      : 'Sin medidas registradas';
-  static String _cm(double? v) =>
-      v == null ? '—' : '${v == v.roundToDouble() ? v.toInt() : v} cm';
+  String get medidasTexto =>
+      tieneMedidas ? 'Alto ${_cm(alto)} · Ancho ${_cm(ancho)} · Fondo ${_cm(fondo)}' : 'Sin medidas registradas';
+  static String _cm(double? v) => v == null ? '—' : '${v == v.roundToDouble() ? v.toInt() : v} cm';
 
   factory Pedido.desde(Map<String, dynamic> m) {
     final c = _mapa(m['clientes']);
@@ -349,7 +348,8 @@ class Cita {
     this.pedidoTitulo = '',
   });
 
-  String get estadoTexto => const {
+  String get estadoTexto =>
+      const {
         'propuesta': 'Propuesta por el cliente',
         'confirmada': 'Confirmada',
         'realizada': 'Realizada',
@@ -358,18 +358,18 @@ class Cita {
       estado;
 
   factory Cita.desde(Map<String, dynamic> m) => Cita(
-        id: _int(m['id']),
-        carpinteriaId: _txt(m['carpinteria_id']),
-        clienteId: m['cliente_id'] == null ? null : _int(m['cliente_id']),
-        pedidoId: m['pedido_id'] == null ? null : _int(m['pedido_id']),
-        fechaHora: _fecha(m['fecha_hora']) ?? DateTime.now(),
-        motivo: _txt(m['motivo']),
-        direccion: _txt(m['direccion']),
-        estado: _txt(m['estado']),
-        notas: _txt(m['notas']),
-        clienteNombre: _txt(_mapa(m['clientes'])?['nombre']),
-        pedidoTitulo: _txt(_mapa(m['pedidos'])?['titulo']),
-      );
+    id: _int(m['id']),
+    carpinteriaId: _txt(m['carpinteria_id']),
+    clienteId: m['cliente_id'] == null ? null : _int(m['cliente_id']),
+    pedidoId: m['pedido_id'] == null ? null : _int(m['pedido_id']),
+    fechaHora: _fecha(m['fecha_hora']) ?? DateTime.now(),
+    motivo: _txt(m['motivo']),
+    direccion: _txt(m['direccion']),
+    estado: _txt(m['estado']),
+    notas: _txt(m['notas']),
+    clienteNombre: _txt(_mapa(m['clientes'])?['nombre']),
+    pedidoTitulo: _txt(_mapa(m['pedidos'])?['titulo']),
+  );
 }
 
 class Partida {
@@ -379,31 +379,25 @@ class Partida {
   String unidad;
   double precioUnitario;
 
-  Partida({
-    this.id,
-    required this.concepto,
-    this.cantidad = 1,
-    this.unidad = 'pza',
-    this.precioUnitario = 0,
-  });
+  Partida({this.id, required this.concepto, this.cantidad = 1, this.unidad = 'pza', this.precioUnitario = 0});
 
   double get importe => (cantidad * precioUnitario * 100).roundToDouble() / 100;
 
   factory Partida.desde(Map<String, dynamic> m) => Partida(
-        id: _int(m['id']),
-        concepto: _txt(m['concepto']),
-        cantidad: _num(m['cantidad']) ?? 1,
-        unidad: _txt(m['unidad']),
-        precioUnitario: _num(m['precio_unitario']) ?? 0,
-      );
+    id: _int(m['id']),
+    concepto: _txt(m['concepto']),
+    cantidad: _num(m['cantidad']) ?? 1,
+    unidad: _txt(m['unidad']),
+    precioUnitario: _num(m['precio_unitario']) ?? 0,
+  );
 
   Map<String, dynamic> aMapa(int cotizacionId) => {
-        'cotizacion_id': cotizacionId,
-        'concepto': concepto,
-        'cantidad': cantidad,
-        'unidad': unidad,
-        'precio_unitario': precioUnitario,
-      };
+    'cotizacion_id': cotizacionId,
+    'concepto': concepto,
+    'cantidad': cantidad,
+    'unidad': unidad,
+    'precio_unitario': precioUnitario,
+  };
 }
 
 class Cotizacion {
@@ -444,7 +438,8 @@ class Cotizacion {
   double get total => costoMateriales + manoObra + costosAdicionales;
   String get folio => 'COT-${id.toString().padLeft(3, '0')}';
 
-  String get estadoTexto => const {
+  String get estadoTexto =>
+      const {
         'borrador': 'Borrador',
         'enviada': 'Enviada',
         'aceptada': 'Aceptada',
@@ -453,7 +448,8 @@ class Cotizacion {
       }[estado] ??
       estado;
 
-  Color get estadoColor => const {
+  Color get estadoColor =>
+      const {
         'borrador': Color(0xFF8A7D73),
         'enviada': Color(0xFF2F6FDB),
         'aceptada': Color(0xFF2E7D4F),
@@ -464,9 +460,8 @@ class Cotizacion {
 
   factory Cotizacion.desde(Map<String, dynamic> m) {
     final p = _mapa(m['pedidos']);
-    final partidas = (m['cotizacion_partidas'] as List?)
-            ?.map((e) => Partida.desde(e as Map<String, dynamic>))
-            .toList() ??
+    final partidas =
+        (m['cotizacion_partidas'] as List?)?.map((e) => Partida.desde(e as Map<String, dynamic>)).toList() ??
         <Partida>[];
     return Cotizacion(
       id: _int(m['id']),
@@ -498,12 +493,12 @@ class Avance {
   Avance({required this.id, required this.estado, required this.progreso, required this.nota, required this.fecha});
 
   factory Avance.desde(Map<String, dynamic> m) => Avance(
-        id: _int(m['id']),
-        estado: _txt(m['estado']),
-        progreso: _int(m['progreso']),
-        nota: _txt(m['nota']),
-        fecha: _fecha(m['created_at']) ?? DateTime.now(),
-      );
+    id: _int(m['id']),
+    estado: _txt(m['estado']),
+    progreso: _int(m['progreso']),
+    nota: _txt(m['nota']),
+    fecha: _fecha(m['created_at']) ?? DateTime.now(),
+  );
 }
 
 class Foto {
@@ -528,15 +523,15 @@ class Foto {
   });
 
   factory Foto.desde(Map<String, dynamic> m) => Foto(
-        id: _int(m['id']),
-        pedidoId: _int(m['pedido_id']),
-        autorId: m['autor_id'] as String?,
-        path: _txt(m['path']),
-        tipo: _txt(m['tipo']),
-        descripcion: _txt(m['descripcion']),
-        descripcionIa: _txt(m['descripcion_ia']),
-        fecha: _fecha(m['created_at']) ?? DateTime.now(),
-      );
+    id: _int(m['id']),
+    pedidoId: _int(m['pedido_id']),
+    autorId: m['autor_id'] as String?,
+    path: _txt(m['path']),
+    tipo: _txt(m['tipo']),
+    descripcion: _txt(m['descripcion']),
+    descripcionIa: _txt(m['descripcion_ia']),
+    fecha: _fecha(m['created_at']) ?? DateTime.now(),
+  );
 }
 
 class Proveedor {
@@ -569,30 +564,30 @@ class Proveedor {
   bool get esPropio => carpinteriaId != null;
 
   factory Proveedor.desde(Map<String, dynamic> m) => Proveedor(
-        id: _int(m['id']),
-        carpinteriaId: m['carpinteria_id'] as String?,
-        tipo: _txt(m['tipo']),
-        nombre: _txt(m['nombre']),
-        descripcion: _txt(m['descripcion']),
-        telefono: _txt(m['telefono']),
-        whatsapp: _txt(m['whatsapp']),
-        correo: _txt(m['correo']),
-        sitioWeb: _txt(m['sitio_web']),
-        direccion: _txt(m['direccion']),
-        horario: _txt(m['horario']),
-      );
+    id: _int(m['id']),
+    carpinteriaId: m['carpinteria_id'] as String?,
+    tipo: _txt(m['tipo']),
+    nombre: _txt(m['nombre']),
+    descripcion: _txt(m['descripcion']),
+    telefono: _txt(m['telefono']),
+    whatsapp: _txt(m['whatsapp']),
+    correo: _txt(m['correo']),
+    sitioWeb: _txt(m['sitio_web']),
+    direccion: _txt(m['direccion']),
+    horario: _txt(m['horario']),
+  );
 
   Map<String, dynamic> aMapa() => {
-        'tipo': tipo,
-        'nombre': nombre,
-        'descripcion': descripcion,
-        'telefono': telefono,
-        'whatsapp': whatsapp,
-        'correo': correo,
-        'sitio_web': sitioWeb,
-        'direccion': direccion,
-        'horario': horario,
-      };
+    'tipo': tipo,
+    'nombre': nombre,
+    'descripcion': descripcion,
+    'telefono': telefono,
+    'whatsapp': whatsapp,
+    'correo': correo,
+    'sitio_web': sitioWeb,
+    'direccion': direccion,
+    'horario': horario,
+  };
 }
 
 class ItemInventario {
@@ -621,27 +616,27 @@ class ItemInventario {
   bool get bajo => stockMinimo > 0 && cantidad <= stockMinimo;
 
   factory ItemInventario.desde(Map<String, dynamic> m) => ItemInventario(
-        id: _int(m['id']),
-        tipo: _txt(m['tipo']),
-        nombre: _txt(m['nombre']),
-        categoria: _txt(m['categoria']),
-        unidad: _txt(m['unidad']),
-        cantidad: _num(m['cantidad']) ?? 0,
-        costoUnitario: _num(m['costo_unitario']) ?? 0,
-        stockMinimo: _num(m['stock_minimo']) ?? 0,
-        notas: _txt(m['notas']),
-      );
+    id: _int(m['id']),
+    tipo: _txt(m['tipo']),
+    nombre: _txt(m['nombre']),
+    categoria: _txt(m['categoria']),
+    unidad: _txt(m['unidad']),
+    cantidad: _num(m['cantidad']) ?? 0,
+    costoUnitario: _num(m['costo_unitario']) ?? 0,
+    stockMinimo: _num(m['stock_minimo']) ?? 0,
+    notas: _txt(m['notas']),
+  );
 
   Map<String, dynamic> aMapa() => {
-        'tipo': tipo,
-        'nombre': nombre,
-        'categoria': categoria,
-        'unidad': unidad,
-        'cantidad': cantidad,
-        'costo_unitario': costoUnitario,
-        'stock_minimo': stockMinimo,
-        'notas': notas,
-      };
+    'tipo': tipo,
+    'nombre': nombre,
+    'categoria': categoria,
+    'unidad': unidad,
+    'cantidad': cantidad,
+    'costo_unitario': costoUnitario,
+    'stock_minimo': stockMinimo,
+    'notas': notas,
+  };
 }
 
 class Gasto {
@@ -654,12 +649,12 @@ class Gasto {
   Gasto({required this.id, required this.concepto, required this.categoria, required this.monto, required this.fecha});
 
   factory Gasto.desde(Map<String, dynamic> m) => Gasto(
-        id: _int(m['id']),
-        concepto: _txt(m['concepto']),
-        categoria: _txt(m['categoria']),
-        monto: _num(m['monto']) ?? 0,
-        fecha: _fecha(m['fecha']) ?? DateTime.now(),
-      );
+    id: _int(m['id']),
+    concepto: _txt(m['concepto']),
+    categoria: _txt(m['categoria']),
+    monto: _num(m['monto']) ?? 0,
+    fecha: _fecha(m['fecha']) ?? DateTime.now(),
+  );
 }
 
 class Mensaje {
@@ -684,15 +679,15 @@ class Mensaje {
   });
 
   factory Mensaje.desde(Map<String, dynamic> m) => Mensaje(
-        id: _int(m['id']),
-        carpinteriaId: _txt(m['carpinteria_id']),
-        clientePerfilId: _txt(m['cliente_perfil_id']),
-        autorId: _txt(m['autor_id']),
-        texto: _txt(m['texto']),
-        fotoPath: m['foto_path'] as String?,
-        leido: m['leido'] == true,
-        fecha: _fecha(m['created_at']) ?? DateTime.now(),
-      );
+    id: _int(m['id']),
+    carpinteriaId: _txt(m['carpinteria_id']),
+    clientePerfilId: _txt(m['cliente_perfil_id']),
+    autorId: _txt(m['autor_id']),
+    texto: _txt(m['texto']),
+    fotoPath: m['foto_path'] as String?,
+    leido: m['leido'] == true,
+    fecha: _fecha(m['created_at']) ?? DateTime.now(),
+  );
 }
 
 class Notificacion {
@@ -715,21 +710,21 @@ class Notificacion {
   });
 
   IconData get icono => switch (tipo) {
-        'mensaje' => Icons.chat_bubble_outline,
-        'cotizacion' => Icons.request_quote_outlined,
-        'avance' => Icons.trending_up,
-        _ => Icons.inventory_2_outlined,
-      };
+    'mensaje' => Icons.chat_bubble_outline,
+    'cotizacion' => Icons.request_quote_outlined,
+    'avance' => Icons.trending_up,
+    _ => Icons.inventory_2_outlined,
+  };
 
   factory Notificacion.desde(Map<String, dynamic> m) => Notificacion(
-        id: _int(m['id']),
-        titulo: _txt(m['titulo']),
-        cuerpo: _txt(m['cuerpo']),
-        tipo: _txt(m['tipo']),
-        pedidoId: m['pedido_id'] == null ? null : _int(m['pedido_id']),
-        leida: m['leida'] == true,
-        fecha: _fecha(m['created_at']) ?? DateTime.now(),
-      );
+    id: _int(m['id']),
+    titulo: _txt(m['titulo']),
+    cuerpo: _txt(m['cuerpo']),
+    tipo: _txt(m['tipo']),
+    pedidoId: m['pedido_id'] == null ? null : _int(m['pedido_id']),
+    leida: m['leida'] == true,
+    fecha: _fecha(m['created_at']) ?? DateTime.now(),
+  );
 }
 
 class ItemCatalogo {
@@ -758,27 +753,27 @@ class ItemCatalogo {
   });
 
   factory ItemCatalogo.desde(Map<String, dynamic> m) => ItemCatalogo(
-        id: _int(m['id']),
-        carpinteriaId: _txt(m['carpinteria_id']),
-        titulo: _txt(m['titulo']),
-        tipoMueble: _txt(m['tipo_mueble']),
-        material: _txt(m['material']),
-        descripcion: _txt(m['descripcion']),
-        precioDesde: _num(m['precio_desde']),
-        imagenPath: m['imagen_path'] as String?,
-        publicado: m['publicado'] != false,
-        carpinteriaNombre: _txt(_mapa(m['carpinterias'])?['nombre']),
-      );
+    id: _int(m['id']),
+    carpinteriaId: _txt(m['carpinteria_id']),
+    titulo: _txt(m['titulo']),
+    tipoMueble: _txt(m['tipo_mueble']),
+    material: _txt(m['material']),
+    descripcion: _txt(m['descripcion']),
+    precioDesde: _num(m['precio_desde']),
+    imagenPath: m['imagen_path'] as String?,
+    publicado: m['publicado'] != false,
+    carpinteriaNombre: _txt(_mapa(m['carpinterias'])?['nombre']),
+  );
 
   Map<String, dynamic> aMapa() => {
-        'titulo': titulo,
-        'tipo_mueble': tipoMueble,
-        'material': material,
-        'descripcion': descripcion,
-        'precio_desde': precioDesde,
-        'imagen_path': imagenPath,
-        'publicado': publicado,
-      };
+    'titulo': titulo,
+    'tipo_mueble': tipoMueble,
+    'material': material,
+    'descripcion': descripcion,
+    'precio_desde': precioDesde,
+    'imagen_path': imagenPath,
+    'publicado': publicado,
+  };
 }
 
 class FichaConocimiento {
@@ -797,12 +792,12 @@ class FichaConocimiento {
   });
 
   factory FichaConocimiento.desde(Map<String, dynamic> m) => FichaConocimiento(
-        id: _int(m['id']),
-        categoria: _txt(m['categoria']),
-        titulo: _txt(m['titulo']),
-        contenido: _txt(m['contenido']),
-        puntaje: _num(m['puntaje']) ?? 0,
-      );
+    id: _int(m['id']),
+    categoria: _txt(m['categoria']),
+    titulo: _txt(m['titulo']),
+    contenido: _txt(m['contenido']),
+    puntaje: _num(m['puntaje']) ?? 0,
+  );
 }
 
 /// Resumen de una conversación para las listas de mensajes.

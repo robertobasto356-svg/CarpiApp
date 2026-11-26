@@ -55,10 +55,7 @@ class Colores {
 }
 
 ThemeData construirTema(Paleta p) {
-  final esquema = ColorScheme.fromSeed(
-    seedColor: p.primario,
-    brightness: Brightness.light,
-  ).copyWith(
+  final esquema = ColorScheme.fromSeed(seedColor: p.primario, brightness: Brightness.light).copyWith(
     primary: p.primario,
     onPrimary: Colors.white,
     primaryContainer: p.primarioSuave,
@@ -78,9 +75,9 @@ ThemeData construirTema(Paleta p) {
 
   final redondeo = BorderRadius.circular(14);
   OutlineInputBorder borde(Color c, [double w = 1]) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: c, width: w),
-      );
+    borderRadius: BorderRadius.circular(12),
+    borderSide: BorderSide(color: c, width: w),
+  );
 
   return ThemeData(
     useMaterial3: true,
@@ -92,16 +89,9 @@ ThemeData construirTema(Paleta p) {
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       centerTitle: false,
-      titleTextStyle: TextStyle(
-        color: p.texto,
-        fontSize: 18,
-        fontWeight: FontWeight.w700,
-      ),
+      titleTextStyle: TextStyle(color: p.texto, fontSize: 18, fontWeight: FontWeight.w700),
     ),
-    textTheme: Typography.blackMountainView.apply(
-      bodyColor: p.texto,
-      displayColor: p.texto,
-    ),
+    textTheme: Typography.blackMountainView.apply(bodyColor: p.texto, displayColor: p.texto),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.white,
@@ -129,9 +119,7 @@ ThemeData construirTema(Paleta p) {
         textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
       ),
     ),
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: p.primario),
-    ),
+    textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: p.primario)),
     cardTheme: CardThemeData(
       color: Colors.white,
       elevation: 0,
@@ -156,15 +144,12 @@ ThemeData construirTema(Paleta p) {
       labelTextStyle: WidgetStateProperty.resolveWith(
         (s) => TextStyle(
           fontSize: 12,
-          fontWeight:
-              s.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
+          fontWeight: s.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
           color: s.contains(WidgetState.selected) ? p.primario : p.textoSuave,
         ),
       ),
       iconTheme: WidgetStateProperty.resolveWith(
-        (s) => IconThemeData(
-          color: s.contains(WidgetState.selected) ? p.primario : p.textoSuave,
-        ),
+        (s) => IconThemeData(color: s.contains(WidgetState.selected) ? p.primario : p.textoSuave),
       ),
     ),
     dividerTheme: DividerThemeData(color: p.borde, space: 1),
@@ -178,14 +163,8 @@ ThemeData construirTema(Paleta p) {
       surfaceTintColor: Colors.transparent,
       showDragHandle: true,
     ),
-    dialogTheme: const DialogThemeData(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.transparent,
-    ),
-    progressIndicatorTheme: ProgressIndicatorThemeData(
-      color: p.primario,
-      linearTrackColor: p.superficieAlterna,
-    ),
+    dialogTheme: const DialogThemeData(backgroundColor: Colors.white, surfaceTintColor: Colors.transparent),
+    progressIndicatorTheme: ProgressIndicatorThemeData(color: p.primario, linearTrackColor: p.superficieAlterna),
     sliderTheme: SliderThemeData(
       activeTrackColor: p.primario,
       thumbColor: p.primario,

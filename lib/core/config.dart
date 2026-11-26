@@ -22,8 +22,7 @@ class Config {
   static const enlaceApp = 'io.carpiapp://login-callback';
 
   /// Carpeta pública con los modelos 3D de referencia (bucket `modelos`).
-  static String modelo(String archivo) =>
-      '$supabaseUrl/storage/v1/object/public/modelos/$archivo';
+  static String modelo(String archivo) => '$supabaseUrl/storage/v1/object/public/modelos/$archivo';
 
   static const correoSoporte = 'soporte@carpiapp.mx';
 }

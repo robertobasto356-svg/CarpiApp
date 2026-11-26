@@ -11,23 +11,22 @@ Pedido _pedido({
   double? ancho,
   double? fondo,
   String estado = 'en_cotizacion',
-}) =>
-    Pedido.desde({
-      'id': 24,
-      'carpinteria_id': 'k1',
-      'cliente_id': 7,
-      'titulo': tipo,
-      'tipo_mueble': tipo,
-      'material_acabado': material,
-      'estado': estado,
-      'progreso': 0,
-      'alto_cm': alto,
-      'ancho_cm': ancho,
-      'fondo_cm': fondo,
-      'created_at': '2026-11-20T10:00:00Z',
-      'updated_at': '2026-11-21T10:00:00Z',
-      'clientes': {'id': 7, 'carpinteria_id': 'k1', 'nombre': 'Ana Torres'},
-    });
+}) => Pedido.desde({
+  'id': 24,
+  'carpinteria_id': 'k1',
+  'cliente_id': 7,
+  'titulo': tipo,
+  'tipo_mueble': tipo,
+  'material_acabado': material,
+  'estado': estado,
+  'progreso': 0,
+  'alto_cm': alto,
+  'ancho_cm': ancho,
+  'fondo_cm': fondo,
+  'created_at': '2026-11-20T10:00:00Z',
+  'updated_at': '2026-11-21T10:00:00Z',
+  'clientes': {'id': 7, 'carpinteria_id': 'k1', 'nombre': 'Ana Torres'},
+});
 
 void main() {
   setUpAll(() => initializeDateFormatting('es_MX'));
@@ -36,6 +35,17 @@ void main() {
     test('dinero en pesos mexicanos', () {
       expect(dinero(12800), r'$12,800.00');
       expect(dineroCorto(3500), r'$3,500');
+    });
+
+    test('plurales en cantidades y conteos', () {
+      expect(cantidadCon(3, 'hoja'), '3 hojas');
+      expect(cantidadCon(1, 'hoja'), '1 hoja');
+      expect(cantidadCon(2.5, 'litro'), '2.5 litros');
+      expect(cantidadCon(4, 'pza'), '4 pza');
+      expect(cantidadCon(2, 'galón'), '2 galones');
+      expect(cantidadCon(2, 'par'), '2 pares');
+      expect(contar(1, 'registro'), '1 registro');
+      expect(contar(3, 'reseña'), '3 reseñas');
     });
 
     test('convierte texto a número', () {
@@ -51,8 +61,10 @@ void main() {
     });
 
     test('mensajes de error legibles', () {
-      expect(mensajeError(Exception('AuthApiException(message: Invalid login credentials, statusCode: 400)')),
-          'Correo o contraseña incorrectos.');
+      expect(
+        mensajeError(Exception('AuthApiException(message: Invalid login credentials, statusCode: 400)')),
+        'Correo o contraseña incorrectos.',
+      );
     });
   });
 
@@ -136,6 +148,23 @@ void main() {
       expect(r.borrador, isNotNull);
       expect(r.borrador!.tipo, 'Clóset');
       expect(r.borrador!.resumen, 'Clóset · Uso: recámara · Melamina blanca');
+    });
+
+    test('no vuelve a preguntar lo que el cliente ya dijo', () async {
+      final ia = CarpiIA(rol: 'cliente');
+      var r = await ia.responder('Quiero un librero de pino para la sala');
+      expect(r.texto, contains('para sala de pino'));
+      expect(r.texto, contains('cómo lo imaginas'));
+      r = await ia.responder('listo');
+      expect(r.borrador!.resumen, 'Librero · Uso: sala · Pino');
+    });
+
+    test('sin preferencia de material no lo deja en el resumen', () async {
+      final ia = CarpiIA(rol: 'cliente');
+      await ia.responder('Necesito una mesa para el comedor');
+      await ia.responder('Aún no lo sé');
+      final r = await ia.responder('listo');
+      expect(r.borrador!.resumen, 'Mesa de comedor · Uso: comedor');
     });
 
     test('estima tableros para el carpintero', () async {

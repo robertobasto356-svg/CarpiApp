@@ -19,8 +19,7 @@ String fechaHora(DateTime d) => '${fechaCorta(d)} · ${hora(d)}';
 
 String _capitalizar(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
-bool mismoDia(DateTime a, DateTime b) =>
-    a.year == b.year && a.month == b.month && a.day == b.day;
+bool mismoDia(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
 
 String primerNombre(String n) {
   final t = n.trim();
@@ -38,9 +37,7 @@ String iniciales(String n) {
 double? aNumero(String s) {
   final limpio = s.replaceAll(RegExp(r'[^0-9.,-]'), '');
   if (limpio.isEmpty) return null;
-  final normal = limpio.contains('.')
-      ? limpio.replaceAll(',', '')
-      : limpio.replaceAll(',', '.');
+  final normal = limpio.contains('.') ? limpio.replaceAll(',', '') : limpio.replaceAll(',', '.');
   return double.tryParse(normal);
 }
 
@@ -49,6 +46,43 @@ String numeroCorto(num? v) {
   if (v == null) return '—';
   return v == v.roundToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
 }
+
+const _abreviaturas = {
+  'pz',
+  'pza',
+  'kg',
+  'g',
+  'gr',
+  'm',
+  'm2',
+  'm²',
+  'm3',
+  'cm',
+  'mm',
+  'l',
+  'lt',
+  'ml',
+  'u',
+  'und',
+  'jgo',
+};
+
+/// "3 hojas", "1 hoja", "2 pza" (las abreviaturas no cambian).
+String cantidadCon(num cantidad, String unidad) {
+  final u = unidad.trim();
+  if (cantidad == 1 || _abreviaturas.contains(u.toLowerCase()) || u.contains('.') || u.endsWith('s')) {
+    return '${numeroCorto(cantidad)} $u';
+  }
+  final plural = RegExp(r'[aeiouáéó]$').hasMatch(u)
+      ? '${u}s'
+      : RegExp(r'[rlnd]$').hasMatch(u)
+      ? '${u.replaceAll('ó', 'o').replaceAll('á', 'a')}es'
+      : u;
+  return '${numeroCorto(cantidad)} $plural';
+}
+
+/// "1 registro", "3 registros".
+String contar(int n, String singular, [String? plural]) => '$n ${n == 1 ? singular : (plural ?? '${singular}s')}';
 
 /// Hace legibles los errores de Supabase/Postgres para el usuario.
 String mensajeError(Object e) {

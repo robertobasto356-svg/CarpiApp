@@ -40,13 +40,73 @@ class CarpiIA {
   static bool _tiene(String t, List<String> palabras) => palabras.any((p) => RegExp('\\b$p').hasMatch(t));
 
   static const _dominio = [
-    'madera', 'mdf', 'melamina', 'triplay', 'aglomerado', 'tablero', 'barniz', 'laca', 'sellador', 'tinta',
-    'aceite', 'cera', 'acabado', 'closet', 'cocina', 'mueble', 'mesa', 'escritorio', 'librero', 'cama',
-    'puerta', 'bisagra', 'corredera', 'jaladera', 'tapacanto', 'canto', 'herraje', 'comejen', 'termita',
-    'humedad', 'sol', 'medida', 'medir', 'cotizacion', 'pedido', 'cita', 'herramienta', 'sierra', 'taladro',
-    'router', 'rebajadora', 'ingletadora', 'pino', 'cedro', 'caoba', 'encino', 'roble', 'parota', 'tzalam',
-    'ciricote', 'melina', 'rosa morada', 'despiece', 'proveedor', 'material', 'pintura', 'lijar', 'carpinter',
-    'cajon', 'repisa', 'gabinete', 'limpi', 'manten', 'realidad aumentada', 'foto', 'entrega', 'fabrica',
+    'madera',
+    'mdf',
+    'melamina',
+    'triplay',
+    'aglomerado',
+    'tablero',
+    'barniz',
+    'laca',
+    'sellador',
+    'tinta',
+    'aceite',
+    'cera',
+    'acabado',
+    'closet',
+    'cocina',
+    'mueble',
+    'mesa',
+    'escritorio',
+    'librero',
+    'cama',
+    'puerta',
+    'bisagra',
+    'corredera',
+    'jaladera',
+    'tapacanto',
+    'canto',
+    'herraje',
+    'comejen',
+    'termita',
+    'humedad',
+    'sol',
+    'medida',
+    'medir',
+    'cotizacion',
+    'pedido',
+    'cita',
+    'herramienta',
+    'sierra',
+    'taladro',
+    'router',
+    'rebajadora',
+    'ingletadora',
+    'pino',
+    'cedro',
+    'caoba',
+    'encino',
+    'roble',
+    'parota',
+    'tzalam',
+    'ciricote',
+    'melina',
+    'rosa morada',
+    'despiece',
+    'proveedor',
+    'material',
+    'pintura',
+    'lijar',
+    'carpinter',
+    'cajon',
+    'repisa',
+    'gabinete',
+    'limpi',
+    'manten',
+    'realidad aumentada',
+    'foto',
+    'entrega',
+    'fabrica',
   ];
 
   // ------------------------------------------------------------------
@@ -58,22 +118,49 @@ class CarpiIA {
 
     if (armandoSolicitud) return _continuarBorrador(mensaje.trim(), t);
 
-    if (_tiene(t, ['hola', 'buen', 'que tal', 'hey'])&& t.length < 25) return bienvenida();
+    if (_tiene(t, ['hola', 'buen', 'que tal', 'hey']) && t.length < 25) return bienvenida();
     if (_tiene(t, ['gracias', 'muchas gracias', 'excelente', 'perfecto']) && t.length < 30) {
-      return RespuestaIA('¡Con gusto! Si tienes otra duda sobre maderas, acabados o tu pedido, aquí estoy.',
-          sugerencias: _sugerencias());
+      return RespuestaIA(
+        '¡Con gusto! Si tienes otra duda sobre maderas, acabados o tu pedido, aquí estoy.',
+        sugerencias: _sugerencias(),
+      );
     }
 
     // Cliente: armar la solicitud
     if (rol == 'cliente' &&
-        (_tiene(t, ['preparar', 'quiero', 'necesito', 'busco', 'me gustaria', 'solicitar', 'hacer un', 'mandar a hacer']) &&
-            (_tiene(t, ['mueble', 'closet', 'cocina', 'mesa', 'escritorio', 'librero', 'cama', 'puerta', 'pedido', 'solicitud', 'tv']) ||
+        (_tiene(t, [
+              'preparar',
+              'quiero',
+              'necesito',
+              'busco',
+              'me gustaria',
+              'solicitar',
+              'hacer un',
+              'mandar a hacer',
+            ]) &&
+            (_tiene(t, [
+                  'mueble',
+                  'closet',
+                  'cocina',
+                  'mesa',
+                  'escritorio',
+                  'librero',
+                  'cama',
+                  'puerta',
+                  'pedido',
+                  'solicitud',
+                  'tv',
+                ]) ||
                 t.contains('preparar mi pedido')))) {
       final r = await _infoSiAplica(t);
       final inicio = _iniciarBorrador(t);
       if (r != null) {
-        return RespuestaIA('${r.texto}\n\n${inicio.texto}',
-            fichas: r.fichas, sugerencias: inicio.sugerencias, borrador: inicio.borrador);
+        return RespuestaIA(
+          '${r.texto}\n\n${inicio.texto}',
+          fichas: r.fichas,
+          sugerencias: inicio.sugerencias,
+          borrador: inicio.borrador,
+        );
       }
       return inicio;
     }
@@ -96,7 +183,16 @@ class CarpiIA {
     if (calculo != null) return calculo;
 
     // Proveedores
-    if (_tiene(t, ['proveedor', 'donde compro', 'donde consigo', 'quien vende', 'maderer', 'ferreter', 'donde venden', 'comprar'])) {
+    if (_tiene(t, [
+      'proveedor',
+      'donde compro',
+      'donde consigo',
+      'quien vende',
+      'maderer',
+      'ferreter',
+      'donde venden',
+      'comprar',
+    ])) {
       return _proveedores(t);
     }
 
@@ -118,21 +214,27 @@ class CarpiIA {
       ..writeln(principal.contenido);
     if (extra.isNotEmpty) b.write('\nTambién te puede servir: ${extra.join(' · ')}.');
     if (rol == 'cliente' && ['madera', 'tablero', 'acabado'].contains(principal.categoria)) {
-      b.write('\n\nLa disponibilidad se confirma con el proveedor. El carpintero revisará contigo cuál opción funciona para tu proyecto.');
+      b.write(
+        '\n\nLa disponibilidad se confirma con el proveedor. El carpintero revisará contigo cuál opción funciona para tu proyecto.',
+      );
     }
-    return RespuestaIA(b.toString().trim(), fichas: relevantes, sugerencias: _sugerencias(despuesDe: principal.categoria));
+    return RespuestaIA(
+      b.toString().trim(),
+      fichas: relevantes,
+      sugerencias: _sugerencias(despuesDe: principal.categoria),
+    );
   }
 
   RespuestaIA bienvenida() => RespuestaIA(
-        rol == 'cliente'
-            ? 'Hola, soy el asistente de CarpiApp. Puedo darte información general de maderas, tableros y acabados, '
-                'cuidados para el calor y la humedad de Mérida, y ayudarte a organizar tu solicitud para el carpintero.\n\n'
-                'No genero diseños ni confirmo precios, medidas o fechas: eso lo acuerdas con tu carpintero.'
-            : 'Hola, soy CarpiIA. Puedo resolver dudas de materiales, herramientas y acabados, consultar proveedores de Mérida, '
-                'estimar tableros para un despiece y revisar si a un pedido le faltan datos antes de cotizar o fabricar.\n\n'
-                'Tú decides qué aplicar: mis respuestas son de apoyo.',
-        sugerencias: _sugerencias(),
-      );
+    rol == 'cliente'
+        ? 'Hola, soy el asistente de CarpiApp. Puedo darte información general de maderas, tableros y acabados, '
+              'cuidados para el calor y la humedad de Mérida, y ayudarte a organizar tu solicitud para el carpintero.\n\n'
+              'No genero diseños ni confirmo precios, medidas o fechas: eso lo acuerdas con tu carpintero.'
+        : 'Hola, soy CarpiIA. Puedo resolver dudas de materiales, herramientas y acabados, consultar proveedores de Mérida, '
+              'estimar tableros para un despiece y revisar si a un pedido le faltan datos antes de cotizar o fabricar.\n\n'
+              'Tú decides qué aplicar: mis respuestas son de apoyo.',
+    sugerencias: _sugerencias(),
+  );
 
   List<String> _sugerencias({String? despuesDe}) => rol == 'cliente'
       ? [
@@ -151,14 +253,17 @@ class CarpiIA {
   RespuestaIA? _limite(String t) {
     final precio = _tiene(t, ['cuanto cuesta', 'cuanto sale', 'precio', 'costo', 'cuanto cobra', 'presupuesto']);
     final medidas = _tiene(t, ['que medida', 'cuanto mide', 'medidas exactas', 'de que tamano', 'medida exacta']);
-    final fecha = _tiene(t, ['en cuantos dias', 'fecha de entrega', 'cuanto tarda', 'cuanto tiempo', 'para cuando']) ||
+    final fecha =
+        _tiene(t, ['en cuantos dias', 'fecha de entrega', 'cuanto tarda', 'cuanto tiempo', 'para cuando']) ||
         (t.contains('cuando') && RegExp(r'entreg|termin|listo|estara|instal').hasMatch(t));
     final diseno = _tiene(t, ['disena', 'diseno', 'dibuja', 'hazme un modelo', 'genera un', 'crea un diseno']);
     if (rol == 'carpintero') {
       // Al carpintero solo le aclaramos el diseño; precios y fechas los define él.
       if (diseno) {
-        return RespuestaIA('No genero diseños. Puedo ayudarte con medidas estándar de referencia, materiales y herrajes para que tú definas el diseño.',
-            sugerencias: const ['Medidas estándar de muebles', 'Bisagras de cazoleta']);
+        return RespuestaIA(
+          'No genero diseños. Puedo ayudarte con medidas estándar de referencia, materiales y herrajes para que tú definas el diseño.',
+          sugerencias: const ['Medidas estándar de muebles', 'Bisagras de cazoleta'],
+        );
       }
       return null;
     }
@@ -179,17 +284,20 @@ class CarpiIA {
   }
 
   RespuestaIA _fueraDeAlcance() => RespuestaIA(
-        'Eso está fuera de lo que puedo confirmar con la información de CarpiApp. '
-        'Puedo ayudarte con maderas, tableros, acabados, herrajes, cuidados de muebles'
-        '${rol == 'cliente' ? ' y a preparar tu consulta para el carpintero.' : ', proveedores locales y la revisión de tus pedidos.'}',
-        sugerencias: _sugerencias(),
-      );
+    'Eso está fuera de lo que puedo confirmar con la información de CarpiApp. '
+    'Puedo ayudarte con maderas, tableros, acabados, herrajes, cuidados de muebles'
+    '${rol == 'cliente' ? ' y a preparar tu consulta para el carpintero.' : ', proveedores locales y la revisión de tus pedidos.'}',
+    sugerencias: _sugerencias(),
+  );
 
   Future<RespuestaIA?> _infoSiAplica(String t) async {
     if (!_tiene(t, ['madera', 'acabado', 'humedad', 'comejen', 'cuidado'])) return null;
     final f = await Api.buscarConocimiento(t, rol, limite: 2);
     if (f.isEmpty || f.first.puntaje < .35) return null;
-    return RespuestaIA('**${f.first.titulo}**\n${f.first.contenido}\nLa disponibilidad se confirma con el proveedor.', fichas: f);
+    return RespuestaIA(
+      '**${f.first.titulo}**\n${f.first.contenido}\nLa disponibilidad se confirma con el proveedor.',
+      fichas: f,
+    );
   }
 
   RespuestaIA? _calcularTableros(String t) {
@@ -221,7 +329,24 @@ class CarpiIA {
     final todos = [...await Api.proveedores('materiales'), ...await Api.proveedores('herramientas')];
     final claves = t
         .split(RegExp(r'[^a-z0-9]+'))
-        .where((w) => w.length > 2 && !['proveedor', 'proveedores', 'donde', 'compro', 'consigo', 'quien', 'vende', 'para', 'los', 'las', 'del', 'que'].contains(w))
+        .where(
+          (w) =>
+              w.length > 2 &&
+              ![
+                'proveedor',
+                'proveedores',
+                'donde',
+                'compro',
+                'consigo',
+                'quien',
+                'vende',
+                'para',
+                'los',
+                'las',
+                'del',
+                'que',
+              ].contains(w),
+        )
         .toList();
     var encontrados = todos.where((p) {
       final texto = normalizar('${p.nombre} ${p.descripcion}');
@@ -229,7 +354,15 @@ class CarpiIA {
     }).toList();
     final general = encontrados.isEmpty;
     if (general) {
-      final herramienta = _tiene(t, ['herramienta', 'sierra', 'taladro', 'herraje', 'bisagra', 'corredera', 'jaladera']);
+      final herramienta = _tiene(t, [
+        'herramienta',
+        'sierra',
+        'taladro',
+        'herraje',
+        'bisagra',
+        'corredera',
+        'jaladera',
+      ]);
       encontrados = todos.where((p) => p.tipo == (herramienta ? 'herramientas' : 'materiales')).toList();
     }
     final lista = encontrados.take(4).toList();
@@ -267,17 +400,87 @@ class CarpiIA {
     return null;
   }
 
+  static const _clavesUso = <String, List<String>>{
+    'Recámara': ['recamara', 'cuarto', 'habitacion', 'dormitorio'],
+    'Cocina': ['cocina'],
+    'Sala': ['sala', 'estancia'],
+    'Comedor': ['comedor'],
+    'Oficina': ['oficina', 'estudio', 'despacho'],
+    'Baño': ['bano'],
+    'Exterior': ['exterior', 'jardin', 'terraza', 'patio', 'alberca'],
+  };
+
+  static const _clavesMaterial = <String, List<String>>{
+    'MDF RH (zonas húmedas)': ['mdf rh', 'rh'],
+    'Melamina': ['melamina'],
+    'MDF': ['mdf'],
+    'Triplay': ['triplay'],
+    'Pino': ['pino'],
+    'Cedro': ['cedro'],
+    'Encino': ['encino', 'roble'],
+    'Parota': ['parota'],
+    'Tzalam': ['tzalam'],
+    'Caoba': ['caoba'],
+  };
+
+  static String? _buscar(Map<String, List<String>> claves, String t) {
+    for (final e in claves.entries) {
+      if (e.value.any((k) => RegExp('\\b$k\\b').hasMatch(t))) return e.key;
+    }
+    return null;
+  }
+
+  /// Espacio donde irá el mueble ("para la sala" → Sala).
+  static String? usoDe(String t) => _buscar(_clavesUso, t);
+
+  /// Madera o tablero mencionado ("de pino" → Pino).
+  static String? materialDe(String t) => _buscar(_clavesMaterial, t);
+
+  /// Pregunta solo lo que falta del borrador (si ya lo dijo, no se lo volvemos a pedir).
+  RespuestaIA _siguientePregunta({String prefijo = ''}) {
+    final b = _borrador!;
+    if (b.uso.isEmpty) {
+      _pasoBorrador = 1;
+      return RespuestaIA('$prefijo¿En qué espacio o para qué uso será el ${b.tipo.toLowerCase()}?', sugerencias: usos);
+    }
+    if (b.material.isEmpty) {
+      _pasoBorrador = 2;
+      final humedo = _tiene(normalizar(b.uso), ['bano', 'cocina', 'exterior', 'jardin', 'terraza']);
+      return RespuestaIA(
+        '$prefijo${humedo ? 'Como estará en una zona con humedad, conviene MDF RH o maderas resistentes, con cantos bien sellados. ' : ''}'
+        '¿Tienes alguna preferencia de material o acabado?',
+        sugerencias: materialesAcabados.take(6).toList()..add('Aún no lo sé'),
+      );
+    }
+    _pasoBorrador = 3;
+    return RespuestaIA(
+      '${prefijo}Cuéntame en pocas palabras cómo lo imaginas (puertas, cajones, color, estilo…). '
+      'Si prefieres, escribe "listo" y lo detallas con el carpintero en la cita.',
+      sugerencias: const ['Listo'],
+    );
+  }
+
   RespuestaIA _iniciarBorrador(String t) {
     _borrador = BorradorSolicitud();
     final tipo = tipoDe(t) ?? '';
     if (tipo.isNotEmpty) {
-      _borrador!.tipo = tipo;
-      _pasoBorrador = 1;
-      return RespuestaIA('Perfecto, organizo tu solicitud de **$tipo**. ¿En qué espacio o para qué uso será?', sugerencias: usos);
+      final b = _borrador!
+        ..tipo = tipo
+        ..uso = usoDe(t) ?? ''
+        ..material = materialDe(t) ?? '';
+      final datos = [
+        if (b.uso.isNotEmpty) 'para ${b.uso.toLowerCase()}',
+        if (b.material.isNotEmpty) 'de ${b.material.toLowerCase()}',
+      ].join(' ');
+      return _siguientePregunta(
+        prefijo: 'Perfecto, organizo tu solicitud de **$tipo**${datos.isEmpty ? '' : ' $datos'}. ',
+      );
     }
     _pasoBorrador = 0;
-    return RespuestaIA('¡Claro! Te hago unas preguntas sencillas para preparar tu solicitud. ¿Qué mueble necesitas?',
-        sugerencias: tiposMueble);
+    return RespuestaIA(
+      '¡Claro! Te hago unas preguntas sencillas para preparar tu solicitud. ¿Qué mueble necesitas?',
+      sugerencias: tiposMueble,
+    );
   }
 
   Future<RespuestaIA> _continuarBorrador(String original, String t) async {
@@ -296,25 +499,17 @@ class CarpiIA {
         } else {
           b.tipo = tipo;
         }
-        _pasoBorrador = 1;
-        return RespuestaIA('¿En qué espacio o para qué uso será el ${b.tipo.toLowerCase()}?', sugerencias: usos);
+        b.uso = usoDe(t) ?? b.uso;
+        b.material = materialDe(t) ?? b.material;
+        return _siguientePregunta();
       case 1:
-        b.uso = original;
-        _pasoBorrador = 2;
-        final humedo = _tiene(t, ['bano', 'cocina', 'exterior', 'jardin', 'terraza']);
-        return RespuestaIA(
-          '${humedo ? 'Como estará en una zona con humedad, conviene MDF RH o maderas resistentes, con cantos bien sellados. ' : ''}'
-          '¿Tienes alguna preferencia de material o acabado?',
-          sugerencias: materialesAcabados.take(6).toList()..add('Aún no lo sé'),
-        );
+        b.uso = usoDe(t) ?? original;
+        b.material = materialDe(t) ?? b.material;
+        return _siguientePregunta();
       case 2:
-        b.material = _tiene(t, ['no se', 'aun no', 'no lo se', 'lo que recomiende']) ? '' : original;
-        _pasoBorrador = 3;
-        return RespuestaIA(
-          'Cuéntame en pocas palabras cómo lo imaginas (puertas, cajones, color, estilo…). '
-          'Si prefieres, escribe "listo" y lo detallas con el carpintero en la cita.',
-          sugerencias: const ['Listo'],
-        );
+        final sinPreferencia = _tiene(t, ['no se', 'aun no', 'no lo se', 'lo que recomiende']);
+        b.material = sinPreferencia ? 'Aún no lo sé' : original; // el formulario lo guarda vacío
+        return _siguientePregunta();
       default:
         if (!_tiene(t, ['listo', 'es todo', 'nada mas', 'ninguno'])) {
           b.descripcion = [b.descripcion, original].where((s) => s.isNotEmpty).join(' ');
@@ -337,49 +532,73 @@ class CarpiIA {
     final h = <Hallazgo>[];
     void r(bool ok, String si, String no) => h.add(Hallazgo(ok, ok ? si : no));
 
-    r(p.materialAcabado.trim().isNotEmpty, 'Material y acabado definidos: ${p.materialAcabado}.',
-        'Falta definir el material y el acabado con el cliente.');
+    r(
+      p.materialAcabado.trim().isNotEmpty,
+      'Material y acabado definidos: ${p.materialAcabado}.',
+      'Falta definir el material y el acabado con el cliente.',
+    );
     final medidas = [p.alto, p.ancho, p.fondo];
-    final faltan = <String>[
-      if (p.alto == null) 'alto',
-      if (p.ancho == null) 'ancho',
-      if (p.fondo == null) 'fondo',
-    ];
-    r(faltan.isEmpty, 'Medidas registradas: ${p.medidasTexto}.',
-        'Faltan medidas: ${faltan.join(', ')}. Tómalas en la cita usando la medida menor.');
+    final faltan = <String>[if (p.alto == null) 'alto', if (p.ancho == null) 'ancho', if (p.fondo == null) 'fondo'];
+    r(
+      faltan.isEmpty,
+      'Medidas registradas: ${p.medidasTexto}.',
+      'Faltan medidas: ${faltan.join(', ')}. Tómalas en la cita usando la medida menor.',
+    );
     if (faltan.isEmpty) {
       final alto = p.alto!, ancho = p.ancho!, fondo = p.fondo!;
       final tipo = normalizar(p.tipoMueble);
       if (tipo.contains('closet') && (fondo < 45 || fondo > 70)) {
-        h.add(Hallazgo(false, 'El fondo de ${fondo.toStringAsFixed(0)} cm es poco usual para un clóset (lo común es 55–60 cm). Verifícalo.'));
+        h.add(
+          Hallazgo(
+            false,
+            'El fondo de ${fondo.toStringAsFixed(0)} cm es poco usual para un clóset (lo común es 55–60 cm). Verifícalo.',
+          ),
+        );
       }
       if (tipo.contains('mesa') && (alto < 60 || alto > 90)) {
-        h.add(Hallazgo(false, 'Una mesa de comedor suele medir ≈75 cm de alto; registraste ${alto.toStringAsFixed(0)} cm.'));
+        h.add(
+          Hallazgo(false, 'Una mesa de comedor suele medir ≈75 cm de alto; registraste ${alto.toStringAsFixed(0)} cm.'),
+        );
       }
       if (tipo.contains('escritorio') && (alto < 65 || alto > 85)) {
-        h.add(Hallazgo(false, 'Un escritorio suele medir 73–76 cm de alto; registraste ${alto.toStringAsFixed(0)} cm.'));
+        h.add(
+          Hallazgo(false, 'Un escritorio suele medir 73–76 cm de alto; registraste ${alto.toStringAsFixed(0)} cm.'),
+        );
       }
       if (medidas.any((v) => v! > 400) || math.max(alto, ancho) > 300 && tipo.contains('mesa')) {
         h.add(Hallazgo(false, 'Alguna medida es muy grande; confirma que esté en centímetros.'));
       }
     }
-    r(fotos > 0, 'Tienes $fotos ${fotos == 1 ? 'foto' : 'fotos'} de referencia.',
-        'No hay fotos de referencia del espacio; toma al menos una en la cita.');
+    r(
+      fotos > 0,
+      'Tienes $fotos ${fotos == 1 ? 'foto' : 'fotos'} de referencia.',
+      'No hay fotos de referencia del espacio; toma al menos una en la cita.',
+    );
     final cita = citas.where((c) => c.estado != 'cancelada').toList();
-    r(cita.isNotEmpty || p.tieneMedidas, 'La cita para medir está ${cita.isEmpty ? 'cubierta' : cita.first.estadoTexto.toLowerCase()}.',
-        'No hay cita agendada para tomar medidas.');
+    r(
+      cita.isNotEmpty || p.tieneMedidas,
+      'La cita para medir está ${cita.isEmpty ? 'cubierta' : cita.first.estadoTexto.toLowerCase()}.',
+      'No hay cita agendada para tomar medidas.',
+    );
     if (cotizacion == null) {
       h.add(Hallazgo(false, 'Aún no hay cotización.'));
     } else {
-      r(cotizacion.partidas.isNotEmpty, 'La cotización desglosa ${cotizacion.partidas.length} materiales.',
-          'La cotización no desglosa materiales; agrega partidas para que el cliente vea el detalle.');
+      r(
+        cotizacion.partidas.isNotEmpty,
+        'La cotización desglosa ${cotizacion.partidas.length} materiales.',
+        'La cotización no desglosa materiales; agrega partidas para que el cliente vea el detalle.',
+      );
       r(cotizacion.manoObra > 0, 'Mano de obra incluida.', 'La cotización no incluye mano de obra.');
       if (cotizacion.estado == 'ajustes') {
         h.add(Hallazgo(false, 'El cliente pidió ajustes: “${cotizacion.comentarioCliente}”.'));
       }
     }
     if (EstadoPedido.enProceso.contains(p.estado)) {
-      r(p.fechaEntrega != null, 'Fecha de entrega estimada: definida.', 'Define una fecha de entrega estimada para el cliente.');
+      r(
+        p.fechaEntrega != null,
+        'Fecha de entrega estimada: definida.',
+        'Define una fecha de entrega estimada para el cliente.',
+      );
     }
     return h;
   }
@@ -398,15 +617,13 @@ class BorradorSolicitud {
   String descripcion = '';
 
   String get resumen => [
-        tipo,
-        if (uso.isNotEmpty) 'Uso: ${uso.toLowerCase()}',
-        if (material.isNotEmpty) material,
-      ].join(' · ');
+    tipo,
+    if (uso.isNotEmpty) 'Uso: ${uso.toLowerCase()}',
+    if (material.isNotEmpty && material != 'Aún no lo sé') material,
+  ].join(' · ');
 
-  String get descripcionCompleta => [
-        if (uso.isNotEmpty) 'Uso: $uso.',
-        if (descripcion.isNotEmpty) descripcion,
-      ].join(' ');
+  String get descripcionCompleta =>
+      [if (uso.isNotEmpty) 'Uso: $uso.', if (descripcion.isNotEmpty) descripcion].join(' ');
 }
 
 class RespuestaIA {

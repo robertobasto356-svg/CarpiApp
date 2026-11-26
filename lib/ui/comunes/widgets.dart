@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/services.dart' show FilteringTextInputFormatter, TextInputFormatter;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/formato.dart';
@@ -17,14 +18,16 @@ Future<T?> ir<T>(BuildContext c, Widget pantalla) =>
 void avisar(BuildContext c, String texto, {bool error = false}) {
   ScaffoldMessenger.of(c)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      content: Text(texto),
-      backgroundColor: error ? Colores.error : null,
-    ));
+    ..showSnackBar(SnackBar(content: Text(texto), backgroundColor: error ? Colores.error : null));
 }
 
-Future<bool> confirmar(BuildContext c, String titulo, String mensaje,
-    {String si = 'Aceptar', bool peligro = false}) async {
+Future<bool> confirmar(
+  BuildContext c,
+  String titulo,
+  String mensaje, {
+  String si = 'Aceptar',
+  bool peligro = false,
+}) async {
   final r = await showAdaptiveDialog<bool>(
     context: c,
     builder: (d) => AlertDialog.adaptive(
@@ -41,6 +44,36 @@ Future<bool> confirmar(BuildContext c, String titulo, String mensaje,
     ),
   );
   return r ?? false;
+}
+
+/// Evita perder un formulario al tocar "atrás" (botón del sistema, gesto o flecha):
+/// primero deja que [antes] lo maneje (p. ej. volver al paso anterior) y, si hay
+/// cambios sin guardar, pide confirmación. `Navigator.pop` directo (al guardar) no se bloquea.
+class SinPerderCambios extends StatelessWidget {
+  final bool Function() hayCambios;
+  final bool Function()? antes;
+  final Widget child;
+  const SinPerderCambios({required this.hayCambios, this.antes, required this.child, super.key});
+
+  @override
+  Widget build(BuildContext context) => PopScope<Object?>(
+    canPop: false,
+    onPopInvokedWithResult: (yaSalio, resultado) async {
+      if (yaSalio || (antes?.call() ?? false)) return;
+      final nav = Navigator.of(context);
+      if (!hayCambios() ||
+          await confirmar(
+            context,
+            '¿Descartar cambios?',
+            'Lo que capturaste todavía no se ha guardado.',
+            si: 'Descartar',
+            peligro: true,
+          )) {
+        nav.pop(resultado);
+      }
+    },
+    child: child,
+  );
 }
 
 /// Ejecuta una acción mostrando un indicador y avisando si falla.
@@ -82,8 +115,10 @@ Future<void> whatsapp(BuildContext c, String tel, [String texto = '']) {
   return abrirEnlace(c, Uri.parse('https://wa.me/$n?text=${Uri.encodeComponent(texto)}'));
 }
 
-Future<void> comoLlegar(BuildContext c, String direccion, [String ciudad = 'Mérida, Yucatán']) =>
-    abrirEnlace(c, Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('$direccion, $ciudad')}'));
+Future<void> comoLlegar(BuildContext c, String direccion, [String ciudad = 'Mérida, Yucatán']) => abrirEnlace(
+  c,
+  Uri.parse('https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent('$direccion, $ciudad')}'),
+);
 
 Future<void> abrirWeb(BuildContext c, String sitio) =>
     abrirEnlace(c, Uri.parse(sitio.startsWith('http') ? sitio : 'https://$sitio'));
@@ -105,21 +140,30 @@ class Marca extends StatelessWidget {
     final puedeVolver = atras && Navigator.of(context).canPop();
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 12, 4),
-      child: Row(children: [
-        if (puedeVolver) ...[
-          BotonCirculo(Icons.chevron_left, () => Navigator.of(context).maybePop()),
-          const SizedBox(width: 10),
+      child: Row(
+        children: [
+          if (puedeVolver) ...[
+            BotonCirculo(Icons.chevron_left, () => Navigator.of(context).maybePop()),
+            const SizedBox(width: 10),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'CARPIAPP',
+                  style: TextStyle(color: cs.primary, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: .3),
+                ),
+                Text(
+                  seccion.toUpperCase(),
+                  style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11, letterSpacing: .6),
+                ),
+              ],
+            ),
+          ),
+          ...acciones,
         ],
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('CARPIAPP',
-                style: TextStyle(color: cs.primary, fontWeight: FontWeight.w800, fontSize: 15, letterSpacing: .3)),
-            Text(seccion.toUpperCase(),
-                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 11, letterSpacing: .6)),
-          ]),
-        ),
-        ...acciones,
-      ]),
+      ),
     );
   }
 }
@@ -160,13 +204,16 @@ class Titulo extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(titulo, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, height: 1.15)),
-        if (subtitulo != null) ...[
-          const SizedBox(height: 4),
-          Text(subtitulo!, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(titulo, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, height: 1.15)),
+          if (subtitulo != null) ...[
+            const SizedBox(height: 4),
+            Text(subtitulo!, style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14)),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
@@ -199,20 +246,21 @@ class PantallaBase extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Column(children: [
-          Marca(seccion, acciones: acciones, atras: atras),
-          if (titulo != null) Titulo(titulo!, subtitulo: subtitulo),
-          Expanded(
-            child: alRefrescar == null
-                ? cuerpo
-                : RefreshIndicator.adaptive(onRefresh: alRefrescar!, child: cuerpo),
-          ),
-          if (pie != null)
-            SafeArea(
-              top: false,
-              child: Padding(padding: const EdgeInsets.fromLTRB(20, 8, 20, 12), child: pie),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Marca(seccion, acciones: acciones, atras: atras),
+            if (titulo != null) Titulo(titulo!, subtitulo: subtitulo),
+            Expanded(
+              child: alRefrescar == null ? cuerpo : RefreshIndicator.adaptive(onRefresh: alRefrescar!, child: cuerpo),
             ),
-        ]),
+            if (pie != null)
+              SafeArea(
+                top: false,
+                child: Padding(padding: const EdgeInsets.fromLTRB(20, 8, 20, 12), child: pie),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -224,15 +272,17 @@ class Etiqueta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 6, top: 4),
-        child: Text(texto.toUpperCase(),
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: .5,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            )),
-      );
+    padding: const EdgeInsets.only(bottom: 6, top: 4),
+    child: Text(
+      texto.toUpperCase(),
+      style: TextStyle(
+        fontSize: 11.5,
+        fontWeight: FontWeight.w700,
+        letterSpacing: .5,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    ),
+  );
 }
 
 class Seccion extends StatelessWidget {
@@ -242,12 +292,16 @@ class Seccion extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 18, bottom: 8),
-        child: Row(children: [
-          Expanded(child: Text(titulo, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800))),
-          ?accion,
-        ]),
-      );
+    padding: const EdgeInsets.only(top: 18, bottom: 8),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(titulo, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+        ),
+        ?accion,
+      ],
+    ),
+  );
 }
 
 // =====================================================================
@@ -283,25 +337,36 @@ class Campo extends StatelessWidget {
     super.key,
   });
 
+  /// Evita letras en montos, cantidades y teléfonos (el teclado físico o pegar texto las permitiría).
+  List<TextInputFormatter>? get _filtros => switch (teclado?.index) {
+    2 => [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+    3 => [FilteringTextInputFormatter.allow(RegExp(r'[0-9+() -]'))],
+    _ => null,
+  };
+
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Etiqueta(etiqueta),
-          TextFormField(
-            controller: control,
-            obscureText: oculto,
-            keyboardType: teclado,
-            maxLines: oculto ? 1 : lineas,
-            minLines: 1,
-            validator: validar,
-            onChanged: alCambiar,
-            textCapitalization: mayusculas,
-            autofillHints: autollenado,
-            decoration: InputDecoration(hintText: pista, prefixIcon: prefijo, suffixIcon: sufijo),
-          ),
-        ]),
-      );
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Etiqueta(etiqueta),
+        TextFormField(
+          controller: control,
+          obscureText: oculto,
+          keyboardType: teclado,
+          maxLines: oculto ? 1 : lineas,
+          minLines: 1,
+          validator: validar,
+          onChanged: alCambiar,
+          textCapitalization: mayusculas,
+          autofillHints: autollenado,
+          inputFormatters: _filtros,
+          decoration: InputDecoration(hintText: pista, prefixIcon: prefijo, suffixIcon: sufijo),
+        ),
+      ],
+    ),
+  );
 }
 
 class Seleccion<T> extends StatelessWidget {
@@ -324,24 +389,27 @@ class Seleccion<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Etiqueta(etiqueta),
-          DropdownButtonFormField<T>(
-            // La clave hace que el campo se reconstruya si el valor cambia desde fuera
-            // (por ejemplo, al agregar un cliente nuevo y seleccionarlo).
-            key: ValueKey<Object?>(valor),
-            initialValue: valor,
-            isExpanded: true,
-            hint: Text(pista),
-            icon: const Icon(Icons.keyboard_arrow_down),
-            borderRadius: BorderRadius.circular(12),
-            dropdownColor: Colors.white,
-            items: [for (final o in opciones) DropdownMenuItem(value: o, child: Text(texto(o)))],
-            onChanged: alCambiar,
-          ),
-        ]),
-      );
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Etiqueta(etiqueta),
+        DropdownButtonFormField<T>(
+          // La clave hace que el campo se reconstruya si el valor cambia desde fuera
+          // (por ejemplo, al agregar un cliente nuevo y seleccionarlo).
+          key: ValueKey<Object?>(valor),
+          initialValue: valor,
+          isExpanded: true,
+          hint: Text(pista),
+          icon: const Icon(Icons.keyboard_arrow_down),
+          borderRadius: BorderRadius.circular(12),
+          dropdownColor: Colors.white,
+          items: [for (final o in opciones) DropdownMenuItem(value: o, child: Text(texto(o)))],
+          onChanged: alCambiar,
+        ),
+      ],
+    ),
+  );
 }
 
 /// Campo que abre un selector (fecha, hora, etc.).
@@ -366,27 +434,37 @@ class CampoToque extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Etiqueta(etiqueta),
-        Material(
-          color: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: cs.outline)),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: alTocar,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              child: Row(children: [
-                Expanded(
-                  child: Text(texto,
-                      style: TextStyle(color: vacio ? cs.onSurfaceVariant : cs.onSurface, fontSize: 15)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Etiqueta(etiqueta),
+          Material(
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: cs.outline),
+            ),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: alTocar,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        texto,
+                        style: TextStyle(color: vacio ? cs.onSurfaceVariant : cs.onSurface, fontSize: 15),
+                      ),
+                    ),
+                    Icon(icono, color: cs.primary, size: 20),
+                  ],
                 ),
-                Icon(icono, color: cs.primary, size: 20),
-              ]),
+              ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -401,20 +479,23 @@ Future<DateTime?> elegirFechaHora(BuildContext c, {DateTime? inicial, bool soloF
       context: c,
       builder: (d) => SizedBox(
         height: 320,
-        child: Column(children: [
-          Row(mainAxisAlignment: MainAxisAlignment.end, children: [
-            TextButton(onPressed: () => Navigator.pop(d, true), child: const Text('Listo')),
-          ]),
-          Expanded(
-            child: CupertinoDatePicker(
-              mode: soloFecha ? CupertinoDatePickerMode.date : CupertinoDatePickerMode.dateAndTime,
-              initialDateTime: base,
-              minimumDate: soloFecha ? null : ahora.subtract(const Duration(minutes: 5)),
-              minuteInterval: 1,
-              onDateTimeChanged: (v) => valor = v,
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [TextButton(onPressed: () => Navigator.pop(d, true), child: const Text('Listo'))],
             ),
-          ),
-        ]),
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: soloFecha ? CupertinoDatePickerMode.date : CupertinoDatePickerMode.dateAndTime,
+                initialDateTime: base,
+                minimumDate: soloFecha ? null : ahora.subtract(const Duration(minutes: 5)),
+                minuteInterval: 1,
+                onDateTimeChanged: (v) => valor = v,
+              ),
+            ),
+          ],
+        ),
       ),
     );
     return ok == true ? valor : null;
@@ -444,14 +525,19 @@ class BotonPrincipal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => FilledButton(
-        onPressed: cargando ? null : alTocar,
-        child: cargando
-            ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white))
-            : Row(mainAxisSize: MainAxisSize.min, children: [
-                if (icono != null) ...[Icon(icono, size: 20), const SizedBox(width: 8)],
-                Flexible(child: Text(texto, textAlign: TextAlign.center)),
-              ]),
-      );
+    // Mientras carga se ignoran los toques pero el botón conserva su color,
+    // para que el indicador blanco se vea.
+    onPressed: cargando ? () {} : alTocar,
+    child: cargando
+        ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.4, color: Colors.white))
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icono != null) ...[Icon(icono, size: 20), const SizedBox(width: 8)],
+              Flexible(child: Text(texto, textAlign: TextAlign.center)),
+            ],
+          ),
+  );
 }
 
 class BotonSecundario extends StatelessWidget {
@@ -463,15 +549,21 @@ class BotonSecundario extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => OutlinedButton(
-        onPressed: alTocar,
-        style: color == null
-            ? null
-            : OutlinedButton.styleFrom(foregroundColor: color, side: BorderSide(color: color!.withValues(alpha: .4))),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (icono != null) ...[Icon(icono, size: 18), const SizedBox(width: 6)],
-          Flexible(child: Text(texto, textAlign: TextAlign.center)),
-        ]),
-      );
+    onPressed: alTocar,
+    style: color == null
+        ? null
+        : OutlinedButton.styleFrom(
+            foregroundColor: color,
+            side: BorderSide(color: color!.withValues(alpha: .4)),
+          ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icono != null) ...[Icon(icono, size: 18), const SizedBox(width: 6)],
+        Flexible(child: Text(texto, textAlign: TextAlign.center)),
+      ],
+    ),
+  );
 }
 
 /// Pestañas tipo "píldora" de los mockups (Materiales | Herramientas).
@@ -484,32 +576,40 @@ class Pildoras extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(children: [
-        for (var i = 0; i < opciones.length; i++)
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Material(
-              color: i == seleccion ? cs.primary : cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(22),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(22),
-                onTap: () => alCambiar(i),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                  child: Text(opciones[i],
-                      style: TextStyle(
-                        color: i == seleccion ? Colors.white : cs.onSurfaceVariant,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13.5,
-                      )),
+    // Siempre alineadas a la izquierda, aunque quepan en pantalla.
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            for (var i = 0; i < opciones.length; i++)
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: Material(
+                  color: i == seleccion ? cs.primary : cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(22),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(22),
+                    onTap: () => alCambiar(i),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                      child: Text(
+                        opciones[i],
+                        style: TextStyle(
+                          color: i == seleccion ? Colors.white : cs.onSurfaceVariant,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-      ]),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -544,7 +644,10 @@ class Tarjeta extends StatelessWidget {
           side: color == null ? BorderSide(color: cs.outline) : BorderSide.none,
         ),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(onTap: alTocar, child: Padding(padding: relleno, child: child)),
+        child: InkWell(
+          onTap: alTocar,
+          child: Padding(padding: relleno, child: child),
+        ),
       ),
     );
   }
@@ -561,11 +664,24 @@ class ChipEstado extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(color: color.withValues(alpha: .12), borderRadius: BorderRadius.circular(20)),
-        child: Text(texto, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
-      );
+  Widget build(BuildContext context) => Row(
+    // Row mínima: la etiqueta mide lo que su texto, aunque esté en una lista.
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Flexible(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(color: color.withValues(alpha: .12), borderRadius: BorderRadius.circular(20)),
+          child: Text(
+            texto,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ),
+    ],
+  );
 }
 
 class Vacio extends StatelessWidget {
@@ -581,16 +697,31 @@ class Vacio extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          CircleAvatar(radius: 32, backgroundColor: cs.primaryContainer, child: Icon(icono, size: 30, color: cs.primary)),
-          const SizedBox(height: 14),
-          Text(texto, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-          if (detalle != null) ...[
-            const SizedBox(height: 6),
-            Text(detalle!, textAlign: TextAlign.center, style: TextStyle(color: cs.onSurfaceVariant)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 32,
+              backgroundColor: cs.primaryContainer,
+              child: Icon(icono, size: 30, color: cs.primary),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              texto,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            ),
+            if (detalle != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                detalle!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: cs.onSurfaceVariant),
+              ),
+            ],
+            if (accion != null) ...[const SizedBox(height: 16), accion!],
           ],
-          if (accion != null) ...[const SizedBox(height: 16), accion!],
-        ]),
+        ),
       ),
     );
   }
@@ -609,11 +740,11 @@ class ErrorCarga extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Vacio(
-        Icons.cloud_off_outlined,
-        'No se pudo cargar',
-        detalle: mensajeError(error),
-        accion: SizedBox(width: 180, child: BotonSecundario('Reintentar', reintentar, icono: Icons.refresh)),
-      );
+    Icons.cloud_off_outlined,
+    'No se pudo cargar',
+    detalle: mensajeError(error),
+    accion: SizedBox(width: 180, child: BotonSecundario('Reintentar', reintentar, icono: Icons.refresh)),
+  );
 }
 
 /// Carga datos asíncronos con estados de carga, error y refresco.
@@ -673,16 +804,18 @@ class Progreso extends StatelessWidget {
   const Progreso(this.valor, {super.key});
 
   @override
-  Widget build(BuildContext context) => Row(children: [
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: LinearProgressIndicator(value: valor / 100, minHeight: 8),
-          ),
+  Widget build(BuildContext context) => Row(
+    children: [
+      Expanded(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: LinearProgressIndicator(value: valor / 100, minHeight: 8),
         ),
-        const SizedBox(width: 10),
-        Text('$valor%', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-      ]);
+      ),
+      const SizedBox(width: 10),
+      Text('$valor%', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+    ],
+  );
 }
 
 /// Indicador de pasos (Proyecto · Material · Cita / Cliente · Proyecto · Costos · Resumen).
@@ -695,38 +828,57 @@ class Pasos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Row(children: [
-      for (var i = 0; i < pasos.length; i++) ...[
-        Expanded(
-          child: Column(children: [
-            Row(children: [
-              Expanded(child: Container(height: 2, color: i == 0 ? Colors.transparent : (i <= actual ? cs.primary : cs.outline))),
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: i <= actual ? cs.primary : cs.surfaceContainerHighest,
-                child: numerados
-                    ? Text('${i + 1}',
-                        style: TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w700, color: i <= actual ? Colors.white : cs.onSurfaceVariant))
-                    : null,
-              ),
-              Expanded(
-                child: Container(
-                    height: 2,
-                    color: i == pasos.length - 1 ? Colors.transparent : (i < actual ? cs.primary : cs.outline)),
-              ),
-            ]),
-            const SizedBox(height: 4),
-            Text(pasos[i],
-                style: TextStyle(
-                  fontSize: 11,
-                  color: i <= actual ? cs.primary : cs.onSurfaceVariant,
-                  fontWeight: i == actual ? FontWeight.w700 : FontWeight.w500,
-                )),
-          ]),
-        ),
+    return Row(
+      children: [
+        for (var i = 0; i < pasos.length; i++) ...[
+          Expanded(
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        color: i == 0 ? Colors.transparent : (i <= actual ? cs.primary : cs.outline),
+                      ),
+                    ),
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundColor: i <= actual ? cs.primary : cs.surfaceContainerHighest,
+                      child: numerados
+                          ? Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: i <= actual ? Colors.white : cs.onSurfaceVariant,
+                              ),
+                            )
+                          : null,
+                    ),
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        color: i == pasos.length - 1 ? Colors.transparent : (i < actual ? cs.primary : cs.outline),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  pasos[i],
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: i <= actual ? cs.primary : cs.onSurfaceVariant,
+                    fontWeight: i == actual ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
-    ]);
+    );
   }
 }
 
@@ -747,31 +899,39 @@ class Aviso extends StatelessWidget {
   });
 
   const Aviso.alerta(this.texto, {this.titulo, this.icono = Icons.warning_amber_rounded, super.key})
-      : fondo = Colores.aviso,
-        colorTexto = Colores.avisoTexto;
+    : fondo = Colores.aviso,
+      colorTexto = Colores.avisoTexto;
 
   @override
   Widget build(BuildContext context) => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(14),
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(14)),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(icono, color: colorTexto, size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    margin: const EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(color: fondo, borderRadius: BorderRadius.circular(14)),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icono, color: colorTexto, size: 20),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               if (titulo != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(titulo!,
-                      style: TextStyle(color: colorTexto, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: .4)),
+                  child: Text(
+                    titulo!,
+                    style: TextStyle(color: colorTexto, fontWeight: FontWeight.w800, fontSize: 12, letterSpacing: .4),
+                  ),
                 ),
               Text(texto, style: TextStyle(color: colorTexto, fontSize: 13.5, height: 1.35)),
-            ]),
+            ],
           ),
-        ]),
-      );
+        ),
+      ],
+    ),
+  );
 }
 
 class Avatar extends StatelessWidget {
@@ -788,8 +948,10 @@ class Avatar extends StatelessWidget {
       backgroundColor: cs.primaryContainer,
       backgroundImage: url == null ? null : NetworkImage(url!),
       child: url == null
-          ? Text(iniciales(nombre),
-              style: TextStyle(color: cs.primary, fontWeight: FontWeight.w800, fontSize: radio * .7))
+          ? Text(
+              iniciales(nombre),
+              style: TextStyle(color: cs.primary, fontWeight: FontWeight.w800, fontSize: radio * .7),
+            )
           : null,
     );
   }
@@ -809,17 +971,26 @@ class Dato extends StatelessWidget {
       onTap: alTocar,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 5),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(
-            width: 92,
-            child: Text(etiqueta.toUpperCase(),
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: cs.onSurfaceVariant, letterSpacing: .4)),
-          ),
-          Expanded(
-            child: Text(valor,
-                style: TextStyle(fontSize: 13.5, color: alTocar != null ? cs.primary : cs.onSurface)),
-          ),
-        ]),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 92,
+              child: Text(
+                etiqueta.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: cs.onSurfaceVariant,
+                  letterSpacing: .4,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Text(valor, style: TextStyle(fontSize: 13.5, color: alTocar != null ? cs.primary : cs.onSurface)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -838,15 +1009,23 @@ class ImagenStorage extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     Widget marco(Widget w) => Container(color: cs.surfaceContainerHighest, alignment: Alignment.center, child: w);
     if (publica) {
-      return Image.network(Api.urlPublica(bucket, ruta),
-          fit: ajuste, errorBuilder: (_, _, _) => marco(const Icon(Icons.broken_image_outlined)));
+      return Image.network(
+        Api.urlPublica(bucket, ruta),
+        fit: ajuste,
+        errorBuilder: (_, _, _) => marco(const Icon(Icons.broken_image_outlined)),
+      );
     }
     return FutureBuilder<String>(
       future: Api.urlFirmada(bucket, ruta),
       builder: (c, s) {
-        if (!s.hasData) return marco(const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)));
-        return Image.network(s.data!,
-            fit: ajuste, errorBuilder: (_, _, _) => marco(const Icon(Icons.broken_image_outlined)));
+        if (!s.hasData) {
+          return marco(const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)));
+        }
+        return Image.network(
+          s.data!,
+          fit: ajuste,
+          errorBuilder: (_, _, _) => marco(const Icon(Icons.broken_image_outlined)),
+        );
       },
     );
   }
@@ -858,17 +1037,25 @@ void verImagen(BuildContext c, String bucket, String ruta, {bool publica = false
     Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(backgroundColor: Colors.black, foregroundColor: Colors.white),
-      body: Column(children: [
-        Expanded(child: InteractiveViewer(child: Center(child: ImagenStorage(bucket, ruta, publica: publica, ajuste: BoxFit.contain)))),
-        if (pie != null && pie.isNotEmpty)
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(pie, style: const TextStyle(color: Colors.white)),
+      body: Column(
+        children: [
+          Expanded(
+            child: InteractiveViewer(
+              child: Center(
+                child: ImagenStorage(bucket, ruta, publica: publica, ajuste: BoxFit.contain),
+              ),
             ),
           ),
-      ]),
+          if (pie != null && pie.isNotEmpty)
+            SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(pie, style: const TextStyle(color: Colors.white)),
+              ),
+            ),
+        ],
+      ),
     ),
   );
 }
@@ -886,25 +1073,33 @@ class Mosaico extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Material(
       color: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: cs.outline)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: cs.outline),
+      ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: alTocar,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Badge(
-              isLabelVisible: insignia > 0,
-              label: Text('$insignia'),
-              backgroundColor: Colores.error,
-              child: Icon(icono, color: cs.primary, size: 28),
-            ),
-            const SizedBox(height: 8),
-            Text(texto,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Badge(
+                isLabelVisible: insignia > 0,
+                label: Text('$insignia'),
+                backgroundColor: Colores.error,
+                child: Icon(icono, color: cs.primary, size: 28),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                texto,
                 textAlign: TextAlign.center,
                 maxLines: 2,
-                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, height: 1.2)),
-          ]),
+                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, height: 1.2),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -925,12 +1120,17 @@ class Saludo extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
       decoration: BoxDecoration(color: cs.primary, borderRadius: BorderRadius.circular(20)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Hola, ${primerNombre(nombre)} $emoji',
-            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w500)),
-        const SizedBox(height: 6),
-        Text(frase, style: TextStyle(color: Colors.white.withValues(alpha: .92), fontSize: 15)),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Hola, ${primerNombre(nombre)} $emoji',
+            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 6),
+          Text(frase, style: TextStyle(color: Colors.white.withValues(alpha: .92), fontSize: 15)),
+        ],
+      ),
     );
   }
 }
@@ -958,6 +1158,8 @@ class _BuscadorState extends State<Buscador> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return TextField(
+      // Al tocar fuera (p. ej. un resultado) se cierra el teclado y no vuelve a abrirse al regresar.
+      onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
       onChanged: (v) {
         _espera?.cancel();
         _espera = Timer(const Duration(milliseconds: 250), () => widget.alCambiar(v.trim().toLowerCase()));
@@ -984,33 +1186,47 @@ class ResumenCostos extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     Widget fila(String a, double v, {bool total = false}) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 3),
-          child: Row(children: [
-            Expanded(
-                child: Text(a,
-                    style: TextStyle(
-                        fontWeight: total ? FontWeight.w800 : FontWeight.w500,
-                        color: total ? cs.onSurface : cs.onSurfaceVariant))),
-            Text(dinero(v),
-                style: TextStyle(
-                  fontWeight: total ? FontWeight.w800 : FontWeight.w600,
-                  fontSize: total ? 20 : 14,
-                  color: total ? cs.primary : cs.onSurface,
-                )),
-          ]),
-        );
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              a,
+              style: TextStyle(
+                fontWeight: total ? FontWeight.w800 : FontWeight.w500,
+                color: total ? cs.onSurface : cs.onSurfaceVariant,
+              ),
+            ),
+          ),
+          Text(
+            dinero(v),
+            style: TextStyle(
+              fontWeight: total ? FontWeight.w800 : FontWeight.w600,
+              fontSize: total ? 20 : 14,
+              color: total ? cs.primary : cs.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
     return Container(
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(color: cs.primaryContainer.withValues(alpha: .6), borderRadius: BorderRadius.circular(16)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Etiqueta('Resumen de cotización'),
-        fila('Materiales', materiales),
-        fila('Mano de obra', manoObra),
-        fila('Costos adicionales', adicionales),
-        const Divider(height: 18),
-        fila('TOTAL', materiales + manoObra + adicionales, total: true),
-      ]),
+      decoration: BoxDecoration(
+        color: cs.primaryContainer.withValues(alpha: .6),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Etiqueta('Resumen de cotización'),
+          fila('Materiales', materiales),
+          fila('Mano de obra', manoObra),
+          fila('Costos adicionales', adicionales),
+          const Divider(height: 18),
+          fila('TOTAL', materiales + manoObra + adicionales, total: true),
+        ],
+      ),
     );
   }
 }

@@ -57,11 +57,7 @@ class Sesion extends ChangeNotifier {
         perfil = Perfil.desde(fila);
         error = null;
         if (perfil!.esCarpintero) {
-          final k = await supa
-              .from('carpinterias')
-              .select()
-              .eq('propietario_id', usuario.id)
-              .maybeSingle();
+          final k = await supa.from('carpinterias').select().eq('propietario_id', usuario.id).maybeSingle();
           carpinteria = k == null ? null : Carpinteria.desde(k);
         } else {
           carpinteria = null;

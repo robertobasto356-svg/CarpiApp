@@ -9,5 +9,4 @@
 // ignore: deprecated_member_use
 export 'package:flutter/material.dart';
 // ignore: deprecated_member_use
-export 'package:flutter/cupertino.dart'
-    show CupertinoDatePicker, CupertinoDatePickerMode, CupertinoIcons;
+export 'package:flutter/cupertino.dart' show CupertinoDatePicker, CupertinoDatePickerMode, CupertinoIcons;

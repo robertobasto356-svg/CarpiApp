@@ -42,6 +42,9 @@ class _SolicitarPantallaState extends State<SolicitarPantalla> {
   DateTime? _cita;
   bool _enviando = false;
   bool _cargando = true;
+  late final String _inicial;
+
+  String _firma() => [_tipo, _material, _desc.text, _direccion.text, _fotos.length, _cita].join('§');
 
   @override
   void initState() {
@@ -51,6 +54,7 @@ class _SolicitarPantallaState extends State<SolicitarPantalla> {
     _tipo = t == null ? null : (tiposMueble.contains(t) ? t : 'Otro');
     final m = widget.materialInicial ?? widget.catalogo?.material;
     if (m != null && m.isNotEmpty) _material = m;
+    _inicial = _firma();
     _cargarTalleres();
   }
 
@@ -84,9 +88,12 @@ class _SolicitarPantallaState extends State<SolicitarPantalla> {
       return;
     }
     if (_cita == null) {
-      final seguir = await confirmar(context, 'Sin fecha de cita',
-          'Puedes enviar la solicitud sin proponer fecha; el carpintero te contactará para agendar la visita.',
-          si: 'Enviar así');
+      final seguir = await confirmar(
+        context,
+        'Sin fecha de cita',
+        'Puedes enviar la solicitud sin proponer fecha; el carpintero te contactará para agendar la visita.',
+        si: 'Enviar así',
+      );
       if (!seguir) return;
     }
     setState(() => _enviando = true);
@@ -115,9 +122,11 @@ class _SolicitarPantallaState extends State<SolicitarPantalla> {
         context: context,
         builder: (d) => AlertDialog.adaptive(
           title: const Text('¡Solicitud enviada!'),
-          content: Text('${_taller!.nombre} recibió tu solicitud. '
-              '${_cita == null ? 'Te contactará para agendar la cita.' : 'Confirmará tu cita del ${fechaHora(_cita!)}.'} '
-              'Después de medir, te enviará la cotización en PDF.'),
+          content: Text(
+            '${_taller!.nombre} recibió tu solicitud. '
+            '${_cita == null ? 'Te contactará para agendar la cita' : 'Confirmará tu cita del ${fechaHora(_cita!)}'} '
+            'y, después de medir, te enviará la cotización en PDF.',
+          ),
           actions: [TextButton(onPressed: () => Navigator.pop(d), child: const Text('Ver mi pedido'))],
         ),
       );
@@ -133,103 +142,138 @@ class _SolicitarPantallaState extends State<SolicitarPantalla> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return PantallaBase(
-      seccion: 'Cliente',
-      titulo: 'Solicitar cotización',
-      subtitulo: 'Cuéntanos qué mueble necesitas',
-      cuerpo: _cargando
-          ? const Cargando()
-          : ListView(padding: const EdgeInsets.fromLTRB(20, 0, 20, 20), children: [
-              Tarjeta(
-                relleno: const EdgeInsets.fromLTRB(8, 14, 8, 10),
-                child: Pasos(const ['Proyecto', 'Material', 'Cita'], _paso, numerados: false),
-              ),
-              if (widget.catalogo != null)
-                Aviso('Basado en el trabajo "${widget.catalogo!.titulo}" del catálogo.', icono: Icons.photo_library_outlined),
-              Seleccion<Carpinteria>(
-                etiqueta: 'Carpintería',
-                valor: _taller,
-                opciones: _talleres,
-                texto: (k) => k.calificacion == null ? k.nombre : '${k.nombre} · ★ ${k.calificacion!.toStringAsFixed(1)}',
-                pista: _talleres.isEmpty ? 'Aún no hay carpinterías registradas' : 'Elegir carpintería',
-                alCambiar: (v) => setState(() => _taller = v),
-              ),
-              Seleccion<String>(
-                etiqueta: 'Tipo de mueble',
-                valor: _tipo,
-                opciones: tiposMueble,
-                texto: (x) => x,
-                pista: 'Elegir tipo de mueble',
-                alCambiar: (v) => setState(() => _tipo = v),
-              ),
-              Seleccion<String>(
-                etiqueta: 'Material y acabado',
-                valor: _material == null ? null : (materialesAcabados.contains(_material) ? _material : null),
-                opciones: [
-                  ...materialesAcabados,
-                ],
-                texto: (x) => x,
-                pista: _material != null && !materialesAcabados.contains(_material) ? _material! : 'Seleccionar material y acabado',
-                alCambiar: (v) => setState(() => _material = v),
-              ),
-              Campo('Descripción del proyecto', _desc,
-                  lineas: 4, pista: 'Describe el diseño, uso y detalles que tienes en mente…'),
-              const Etiqueta('Fotos de referencia'),
-              Wrap(spacing: 8, runSpacing: 8, children: [
-                for (final f in _fotos)
-                  Stack(children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.memory(f.bytes, width: 86, height: 86, fit: BoxFit.cover),
-                    ),
-                    Positioned(
-                      right: 2,
-                      top: 2,
-                      child: GestureDetector(
-                        onTap: () => setState(() => _fotos.remove(f)),
-                        child: const CircleAvatar(radius: 11, backgroundColor: Colors.black54, child: Icon(Icons.close, size: 14, color: Colors.white)),
-                      ),
-                    ),
-                  ]),
-                InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () async {
-                    final f = await ir<FotoPendiente>(context, const CamaraCliente());
-                    if (f != null) setState(() => _fotos.add(f));
-                  },
-                  child: Container(
-                    width: _fotos.isEmpty ? double.infinity : 86,
-                    height: _fotos.isEmpty ? 56 : 86,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: cs.outline, width: 1.4),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(_fotos.isEmpty ? '+ Agregar fotos' : '+',
-                        style: TextStyle(color: cs.primary, fontWeight: FontWeight.w700, fontSize: _fotos.isEmpty ? 15 : 26)),
+    return SinPerderCambios(
+      hayCambios: () => !_enviando && _firma() != _inicial,
+      child: PantallaBase(
+        seccion: 'Cliente',
+        titulo: 'Solicitar cotización',
+        subtitulo: 'Cuéntanos qué mueble necesitas',
+        cuerpo: _cargando
+            ? const Cargando()
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                children: [
+                  Tarjeta(
+                    relleno: const EdgeInsets.fromLTRB(8, 14, 8, 10),
+                    child: Pasos(const ['Proyecto', 'Material', 'Cita'], _paso, numerados: false),
                   ),
-                ),
-              ]),
-              const SizedBox(height: 12),
-              CampoToque(
-                etiqueta: 'Fecha y hora de cita',
-                texto: _cita == null ? 'Elegir fecha y horario' : fechaHora(_cita!),
-                vacio: _cita == null,
-                alTocar: () async {
-                  final f = await elegirFechaHora(context, inicial: _cita);
-                  if (f == null) return;
-                  if (f.isBefore(DateTime.now())) {
-                    if (context.mounted) avisar(context, 'Elige una fecha futura.', error: true);
-                    return;
-                  }
-                  setState(() => _cita = f);
-                },
+                  if (widget.catalogo != null)
+                    Aviso(
+                      'Basado en el trabajo "${widget.catalogo!.titulo}" del catálogo.',
+                      icono: Icons.photo_library_outlined,
+                    ),
+                  Seleccion<Carpinteria>(
+                    etiqueta: 'Carpintería',
+                    valor: _taller,
+                    opciones: _talleres,
+                    texto: (k) =>
+                        k.calificacion == null ? k.nombre : '${k.nombre} · ★ ${k.calificacion!.toStringAsFixed(1)}',
+                    pista: _talleres.isEmpty ? 'Aún no hay carpinterías registradas' : 'Elegir carpintería',
+                    alCambiar: (v) => setState(() => _taller = v),
+                  ),
+                  Seleccion<String>(
+                    etiqueta: 'Tipo de mueble',
+                    valor: _tipo,
+                    opciones: tiposMueble,
+                    texto: (x) => x,
+                    pista: 'Elegir tipo de mueble',
+                    alCambiar: (v) => setState(() => _tipo = v),
+                  ),
+                  Seleccion<String>(
+                    etiqueta: 'Material y acabado',
+                    valor: _material == null ? null : (materialesAcabados.contains(_material) ? _material : null),
+                    opciones: [...materialesAcabados],
+                    texto: (x) => x,
+                    pista: _material != null && !materialesAcabados.contains(_material)
+                        ? _material!
+                        : 'Seleccionar material y acabado',
+                    alCambiar: (v) => setState(() => _material = v),
+                  ),
+                  Campo(
+                    'Descripción del proyecto',
+                    _desc,
+                    lineas: 4,
+                    pista: 'Describe el diseño, uso y detalles que tienes en mente…',
+                  ),
+                  const Etiqueta('Fotos de referencia'),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final f in _fotos)
+                        Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.memory(f.bytes, width: 86, height: 86, fit: BoxFit.cover),
+                            ),
+                            Positioned(
+                              right: 2,
+                              top: 2,
+                              child: GestureDetector(
+                                onTap: () => setState(() => _fotos.remove(f)),
+                                child: const CircleAvatar(
+                                  radius: 11,
+                                  backgroundColor: Colors.black54,
+                                  child: Icon(Icons.close, size: 14, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () async {
+                          final f = await ir<FotoPendiente>(context, const CamaraCliente());
+                          if (f != null) setState(() => _fotos.add(f));
+                        },
+                        child: Container(
+                          width: _fotos.isEmpty ? double.infinity : 86,
+                          height: _fotos.isEmpty ? 56 : 86,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: cs.outline, width: 1.4),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            _fotos.isEmpty ? '+ Agregar fotos' : '+',
+                            style: TextStyle(
+                              color: cs.primary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: _fotos.isEmpty ? 15 : 26,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  CampoToque(
+                    etiqueta: 'Fecha y hora de cita',
+                    texto: _cita == null ? 'Elegir fecha y horario' : fechaHora(_cita!),
+                    vacio: _cita == null,
+                    alTocar: () async {
+                      final f = await elegirFechaHora(context, inicial: _cita);
+                      if (f == null) return;
+                      if (f.isBefore(DateTime.now())) {
+                        if (context.mounted) avisar(context, 'Elige una fecha futura.', error: true);
+                        return;
+                      }
+                      setState(() => _cita = f);
+                    },
+                  ),
+                  Campo('Dirección para la cita', _direccion, pista: 'Calle, número, colonia'),
+                  const Aviso(
+                    'Las medidas las tomará el carpintero durante la cita.',
+                    icono: Icons.info,
+                    fondo: Colores.ia,
+                    colorTexto: Colores.iaTexto,
+                  ),
+                ],
               ),
-              Campo('Dirección para la cita', _direccion, pista: 'Calle, número, colonia'),
-              const Aviso('Las medidas las tomará el carpintero durante la cita.', icono: Icons.info, fondo: Colores.ia, colorTexto: Colores.iaTexto),
-            ]),
-      pie: BotonPrincipal('Enviar solicitud', _cargando ? null : _enviar, cargando: _enviando),
+        pie: BotonPrincipal('Enviar solicitud', _cargando ? null : _enviar, cargando: _enviando),
+      ),
     );
   }
 }
