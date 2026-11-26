@@ -1,8 +1,24 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// Firma estable para publicar actualizaciones que se instalen encima de la versión anterior.
+// Se toma de variables de entorno (GitHub Actions) o de android/key.properties (solo local, no se sube).
+// Sin llave propia (desarrollo) se usa la de depuración. Ver docs/INSTALACION.md.
+val firma = Properties().apply {
+    val archivo = rootProject.file("key.properties")
+    if (archivo.exists()) FileInputStream(archivo).use { load(it) }
+}
+
+fun datoFirma(variable: String, propiedad: String): String? =
+    System.getenv(variable)?.takeIf { it.isNotBlank() } ?: firma.getProperty(propiedad)
+
+val almacenFirma = datoFirma("CARPIAPP_KEYSTORE", "storeFile")
 
 android {
     namespace = "mx.carpiapp.app"
@@ -15,7 +31,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "mx.carpiapp.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -29,11 +44,27 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (almacenFirma != null) {
+            create("publicacion") {
+                storeFile = file(almacenFirma)
+                storePassword = datoFirma("CARPIAPP_KEYSTORE_PASSWORD", "storePassword")
+                keyAlias = datoFirma("CARPIAPP_KEY_ALIAS", "keyAlias")
+                keyPassword = datoFirma("CARPIAPP_KEY_PASSWORD", "keyPassword")
+            }
+        }
+    }
+
+    // El lint de AGP 9 falla con Java 17 al revisar plugins (image_picker); no afecta al APK.
+    lint {
+        checkReleaseBuilds = false
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("publicacion") ?: signingConfigs.getByName("debug")
+            // Reglas para que la optimización (R8) no rompa ML Kit (descripción de fotos).
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
 }

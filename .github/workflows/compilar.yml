@@ -1,6 +1,7 @@
 # Compila CarpiApp para Android (APK) e iPhone (IPA sin firmar) en GitHub Actions.
 # Es gratis porque el repositorio es público. Los archivos quedan en la pestaña
-# "Actions" → ejecución → "Artifacts".
+# "Actions" → ejecución → "Artifacts", y al publicar una versión (git tag v1.0.0)
+# también en "Releases", con enlace de descarga directo para el teléfono.
 #
 # Instalar en iPhone sin pagar la cuenta de Apple: descarga el IPA y usa
 # Sideloadly (Windows/Mac) con tu Apple ID gratuito. La app dura 7 días y
@@ -25,6 +26,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.50.1
           cache: true
       - run: flutter pub get
       - run: flutter analyze
@@ -33,6 +35,10 @@ jobs:
   android:
     needs: pruebas
     runs-on: ubuntu-latest
+    env:
+      # Llave de firma estable (opcional). Sin ella el APK se firma con una llave temporal
+      # y para actualizar habría que desinstalar la versión anterior.
+      FIRMA_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -42,9 +48,21 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.50.1
           cache: true
       - run: flutter pub get
-      - run: flutter build apk --release
+      - name: Compilar APK
+        env:
+          CARPIAPP_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          CARPIAPP_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          CARPIAPP_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -n "$FIRMA_B64" ]; then
+            echo "$FIRMA_B64" | base64 -d > "$RUNNER_TEMP/carpiapp.jks"
+            export CARPIAPP_KEYSTORE="$RUNNER_TEMP/carpiapp.jks"
+          fi
+          # Solo teléfonos (ARM): el APK pesa bastante menos sin la versión para emuladores.
+          flutter build apk --release --target-platform android-arm,android-arm64
       - uses: actions/upload-artifact@v4
         with:
           name: CarpiApp-android
@@ -58,6 +76,7 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: 3.50.1
           cache: true
       - run: flutter pub get
       - run: flutter build ios --release --no-codesign
@@ -65,8 +84,38 @@ jobs:
         run: |
           mkdir -p Payload
           cp -R build/ios/iphoneos/Runner.app Payload/
+          # ML Kit en iOS (SwiftPM) necesita sus modelos como recursos de la app.
+          for B in MLKitImageLabelingResources MLKitXenoResources; do
+            curl -fsSL -o "$B.zip" "https://github.com/d-date/google-mlkit-swiftpm/releases/download/9.0.3/$B.bundle.zip"               && unzip -q -o "$B.zip" -d Payload/Runner.app/ || echo "Aviso: no se pudo descargar $B"
+          done
           zip -qr CarpiApp-sin-firmar.ipa Payload
       - uses: actions/upload-artifact@v4
         with:
           name: CarpiApp-ios
           path: CarpiApp-sin-firmar.ipa
+
+  # Al subir una etiqueta de versión (por ejemplo v1.0.0) se publica una página
+  # de descarga en GitHub → Releases con el APK y el IPA, sin iniciar sesión.
+  publicar:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [android, ios]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: compilados
+      - name: Renombrar archivos
+        run: |
+          mv compilados/CarpiApp-android/app-release.apk "CarpiApp-${GITHUB_REF_NAME}.apk"
+          mv compilados/CarpiApp-ios/CarpiApp-sin-firmar.ipa "CarpiApp-${GITHUB_REF_NAME}-iphone-sin-firmar.ipa"
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: CarpiApp ${{ github.ref_name }}
+          body: |
+            **Android:** descarga el archivo `.apk` desde el teléfono y ábrelo (permite "instalar apps desconocidas").
+            **iPhone:** descarga el `.ipa` en la PC e instálalo con Sideloadly y tu Apple ID (ver docs/INSTALACION.md).
+          files: |
+            CarpiApp-*.apk
+            CarpiApp-*.ipa

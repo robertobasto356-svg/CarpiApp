@@ -48,6 +48,37 @@ La llave publicable está en `lib/core/config.dart`. Es segura dentro de la app 
 flutter run
 ```
 
+### Instalar sin cable (desde GitHub)
+
+Cada versión publicada (etiqueta `v1.0.0`, `v1.0.1`…) aparece en **GitHub → Releases** con el archivo `CarpiApp-v1.0.0.apk`. Desde el teléfono, abre la página de Releases del repositorio, descarga el `.apk` y ábrelo. Android pedirá permitir "instalar apps desconocidas" para el navegador. Para actualizar, instala la versión nueva encima: no se pierden datos, porque todo vive en Supabase.
+
+Para publicar una versión (sube antes el número `version:` de `pubspec.yaml`, por ejemplo `1.0.1+2`):
+
+```powershell
+git tag v1.0.0; git push origin v1.0.0
+```
+
+#### Llave de firma (una sola vez)
+
+Para que cada versión nueva se instale **encima** de la anterior, todas deben firmarse con la misma llave. Se crea una vez y se guarda como secreto en GitHub (nunca en el repositorio):
+
+```powershell
+keytool -genkeypair -v -keystore carpiapp.jks -alias carpiapp -keyalg RSA -keysize 2048 -validity 10000
+```
+
+En **GitHub → Settings → Secrets and variables → Actions** agrega:
+
+| Secreto | Valor |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | El archivo en base64: `[Convert]::ToBase64String([IO.File]::ReadAllBytes("carpiapp.jks"))` |
+| `ANDROID_KEYSTORE_PASSWORD` | Contraseña del almacén |
+| `ANDROID_KEY_ALIAS` | `carpiapp` |
+| `ANDROID_KEY_PASSWORD` | Contraseña de la llave |
+
+Guarda `carpiapp.jks` y sus contraseñas en un lugar seguro: si se pierden, la siguiente versión obligará a desinstalar la app (los datos no se pierden, viven en Supabase). Para firmar en la PC, crea `android/key.properties` (ignorado por git) con `storeFile`, `storePassword`, `keyAlias` y `keyPassword`. Sin llave, la app se firma con la de depuración.
+
+### Compilar en la PC
+
 Para generar un APK instalable:
 
 ```powershell
@@ -83,4 +114,12 @@ GitHub Actions corre ambas antes de compilar.
 
 ```powershell
 python tools/generar_modelos.py assets/modelos
+```
+
+## 7. Regenerar los íconos de la app
+
+Los íconos de Android (incluido el adaptativo) y de iPhone salen del emblema de `assets/logo.png`:
+
+```powershell
+python tools/generar_iconos.py
 ```

@@ -50,3 +50,11 @@ app.*.map.json
 # Volcados de la JVM al fallar Gradle
 hs_err_pid*.log
 replay_pid*.log
+
+# Credenciales de cuentas de prueba (solo locales)
+*.local.md
+
+# Llave de firma de Android (nunca al repositorio; va como secreto de GitHub)
+/android/key.properties
+*.jks
+*.keystore
